@@ -1,10 +1,10 @@
 {
   "products": [
     {
-      "code": "XST （JBZ）Y250gSDSFA-001",
+      "code": "XST （JBZ）Y250gCDSFA-001",
       "title": "新蒜苔 （精包装）约250g 产品溯源信息",
       "name": "新蒜苔 （精包装）约250g",
-      "origin": "香港",
+      "origin": "成都",
       "supplier": "重庆洁米诺米业连锁有限公司",
       "shelfLife": "7天（冷藏0-4℃）",
       "reportImages": [
@@ -16,10 +16,10 @@
       ]
     },
     {
-      "code": "PEB （JBZ）Y400gZQPX1-2",
+      "code": "PEB （JBZ）Y400gNMGPX1-2",
       "title": "瓢儿白 （精包装）约400g 产品溯源信息",
       "name": "瓢儿白 （精包装）约400g",
-      "origin": "重庆",
+      "origin": "内蒙古",
       "supplier": "重庆洁米诺米业连锁有限公司",
       "shelfLife": "7天（冷藏0-5℃）",
       "reportImages": [
@@ -27,10 +27,10 @@
       ]
     },
     {
-      "code": "HLB （JBZ）Y400gSXSFc-34",
+      "code": "HLB （JBZ）Y400gDBSFc-34",
       "title": "胡萝卜 （精包装）约400g 产品溯源信息",
       "name": "胡萝卜 （精包装）约400g",
-      "origin": "陕西",
+      "origin": "东北",
       "supplier": "重庆洁米诺米业连锁有限公司",
       "shelfLife": "7天（冷藏0-6℃）",
       "reportImages": [
@@ -87,6 +87,21 @@
       "title": "葡萄 产品溯源信息",
       "name": "葡萄",
       "origin": "攀枝花",
+      "supplier": "蒙哥",
+      "shelfLife": "2天",
+      "reportImages": [
+        "https://s41.ax1x.com/2026/02/26/pZxyblj.jpg",
+        "https://s41.ax1x.com/2026/02/26/pZxyq6s.jpg",
+        "https://s41.ax1x.com/2026/02/26/pZxyHpQ.jpg",
+        "https://s41.ax1x.com/2026/02/26/pZxyq6s.jpg",
+        "https://s41.ax1x.com/2026/02/26/pZxyHpQ.jpg"
+      ]
+    },
+    {
+      "code": "CPGZTGZF1-1",
+      "title": "丑苹果 产品溯源信息",
+      "name": "丑苹果",
+      "origin": "昭通",
       "supplier": "蒙哥",
       "shelfLife": "2天",
       "reportImages": [
