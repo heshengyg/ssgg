@@ -43,10 +43,18 @@ body {
     margin-bottom: 8px;
 }
 
+.logo-img {
+    height: 40px;          /* 根据您的图片调整合适高度 */
+    width: auto;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
 .logo-text {
     font-size: 1.8rem;
     font-weight: 400;
     letter-spacing: 1px;
+    vertical-align: middle;
 }
 
 .slogan {
@@ -284,6 +292,9 @@ button[type="submit"]:hover {
     }
     .logo-area {
         padding: 0 12px 12px 12px;
+    }
+    .logo-img {
+        height: 30px;      /* 手机端稍微缩小 */
     }
     .logo-text {
         font-size: 1.5rem;
