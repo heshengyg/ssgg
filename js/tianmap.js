@@ -100,68 +100,79 @@ function bindSearch() {
     searchBtn.replaceWith(searchBtn.cloneNode(true));
     const newSearchBtn = document.getElementById('searchBtn');
 
-    newSearchBtn.addEventListener('click', function() {
-        const address = searchInput.value.trim();
-        if (!address) {
-            alert('请输入地址');
-            return;
-        }
+newSearchBtn.addEventListener('click', function() {
+    const address = searchInput.value.trim();
+    if (!address) {
+        alert('请输入地址');
+        return;
+    }
 
-        if (!map) {
-            alert('地图未初始化');
-            return;
-        }
+    if (!map) {
+        alert('地图未初始化');
+        return;
+    }
 
-        const geocoder = new T.Geocoder();
-        console.log('开始搜索地址：', address);
-        geocoder.getPoint(address, function(result) {
-            console.log('地理编码结果：', result);
-            // 检查结果状态
-            const status = result.getStatus ? result.getStatus() : -1;
-            console.log('状态码：', status);
+    const geocoder = new T.Geocoder();
+    console.log('开始搜索地址：', address);
+    geocoder.getPoint(address, function(result) {
+        console.log('地理编码结果：', result);
+        // 打印 result 的所有属性和方法
+        console.log('result 类型：', result.constructor?.name);
+        console.log('result 可枚举属性：', Object.keys(result));
+        console.log('result 所有属性名：', Object.getOwnPropertyNames(result));
+        
+        const status = result.getStatus ? result.getStatus() : -1;
+        console.log('状态码：', status);
 
-            if (status === 0) {
-                // 尝试获取位置点（可能有多个结果）
-                let point = null;
-                // 方法1：如果 result.getLocation() 存在
-                if (result.getLocation) {
-                    point = result.getLocation();
-                }
-                // 方法2：如果有 poiList，取第一个的坐标
-                if (!point && result.getPoiList) {
-                    const poiList = result.getPoiList();
-                    if (poiList && poiList.length > 0) {
-                        const firstPoi = poiList[0];
-                        if (firstPoi.getLngLat) {
-                            point = firstPoi.getLngLat();
-                        } else if (firstPoi.lnglat) {
-                            point = firstPoi.lnglat;
-                        }
+        if (status === 0) {
+            let point = null;
+
+            // 尝试常见的几种获取方式
+            if (result.getLocation && typeof result.getLocation === 'function') {
+                point = result.getLocation();
+                console.log('通过 getLocation 获取点：', point);
+            }
+
+            if (!point && result.getPoiList && typeof result.getPoiList === 'function') {
+                const poiList = result.getPoiList();
+                console.log('poiList 数量：', poiList?.length);
+                if (poiList && poiList.length > 0) {
+                    const poi = poiList[0];
+                    console.log('第一个 poi 对象：', poi);
+                    console.log('poi 属性：', Object.keys(poi));
+                    if (poi.getLngLat && typeof poi.getLngLat === 'function') {
+                        point = poi.getLngLat();
+                    } else if (poi.lnglat) {
+                        point = poi.lnglat;
+                    } else if (poi.location) {
+                        point = poi.location;
                     }
                 }
-                // 方法3：如果有多个点，但上面都取不到，尝试从 result.poiList 直接取
-                if (!point && result.poiList && result.poiList.length > 0) {
-                    const poi = result.poiList[0];
-                    point = poi.lnglat || poi.location;
-                }
-
-                if (point) {
-                    map.panTo(point);
-                    map.clearOverlays();
-                    const marker = new T.Marker(point);
-                    map.addOverlay(marker);
-                    // 自动触发逆地理编码
-                    const fakeEvent = { lnglat: point };
-                    onMapClick(fakeEvent);
-                } else {
-                    alert('未找到该地址的坐标点，请尝试更具体的地址');
-                }
-            } else {
-                alert('地理编码失败，请检查地址或网络');
             }
-        });
+
+            if (!point && result.poiList && result.poiList.length > 0) {
+                const poi = result.poiList[0];
+                point = poi.lnglat || poi.location;
+            }
+
+            if (point) {
+                console.log('成功提取坐标点：', point);
+                map.panTo(point);
+                map.clearOverlays();
+                const marker = new T.Marker(point);
+                map.addOverlay(marker);
+                // 自动触发逆地理编码填充表单
+                const fakeEvent = { lnglat: point };
+                onMapClick(fakeEvent);
+            } else {
+                console.error('无法从结果中提取坐标点，完整结果：', result);
+                alert('无法获取该地址的坐标点，请尝试更具体的地址');
+            }
+        } else {
+            alert('地理编码失败，请检查地址或网络');
+        }
     });
-}
+});
 
 function openMapPicker(formId) {
     currentFormId = formId;
