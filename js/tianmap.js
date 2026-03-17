@@ -5,13 +5,26 @@ let isClickBound = false;
 
 // 初始化地图
 function initMap() {
+    const mapContainer = document.getElementById('mapContainer');
+    if (!mapContainer) {
+        console.error('地图容器不存在');
+        return null;
+    }
+
     if (!map) {
-        map = new T.Map('mapContainer');
-        map.centerAndZoom(new T.LngLat(116.397428, 39.90923), 12);
-        map.addControl(new T.Control.Zoom());
-        if (!isClickBound) {
-            map.addEventListener('click', onMapClick);
-            isClickBound = true;
+        try {
+            map = new T.Map('mapContainer');
+            map.centerAndZoom(new T.LngLat(116.397428, 39.90923), 12);
+            map.addControl(new T.Control.Zoom());
+            if (!isClickBound) {
+                map.addEventListener('click', onMapClick);
+                isClickBound = true;
+            }
+            console.log('地图初始化成功');
+        } catch (e) {
+            console.error('地图初始化失败：', e);
+            alert('地图初始化失败，请刷新页面重试');
+            return null;
         }
     }
     return map;
@@ -22,7 +35,8 @@ function onMapClick(e) {
     const lnglat = e.lnglat;
     const geocoder = new T.Geocoder();
     geocoder.getLocation(lnglat, function(result) {
-        if (result.getStatus() === 0) {
+        // 注意：这里的 result 可能也是普通对象，但逆地理编码我们沿用之前的调用方式
+        if (result.getStatus && result.getStatus() === 0) {
             const comp = result.getAddressComponent();
             const detail = result.getAddress() || '';
             if (comp) {
@@ -111,7 +125,7 @@ function bindSearch() {
         }
 
         if (!map) {
-            alert('地图未初始化');
+            alert('地图未初始化，请稍后重试');
             return;
         }
 
@@ -119,46 +133,26 @@ function bindSearch() {
         console.log('开始搜索地址：', address);
         geocoder.getPoint(address, function(result) {
             console.log('地理编码结果：', result);
-            // 打印 result 的所有属性和方法
             console.log('result 类型：', result.constructor?.name);
-            console.log('result 可枚举属性：', Object.keys(result));
-            console.log('result 所有属性名：', Object.getOwnPropertyNames(result));
+            console.log('result 属性：', Object.keys(result));
 
-            const status = result.getStatus ? result.getStatus() : -1;
+            // 根据截图，result 是一个普通对象，有 status、location、formatted_address 等
+            // 注意 status 可能是字符串 "0"
+            const status = result.status;
             console.log('状态码：', status);
 
-            if (status === 0) {
+            if (status === '0' || status === 0) {
+                // 尝试提取坐标点
                 let point = null;
 
-                // 尝试方式1：直接获取点
-                if (result.getLocation && typeof result.getLocation === 'function') {
-                    point = result.getLocation();
-                    console.log('通过 getLocation 获取点：', point);
-                }
-
-                // 尝试方式2：通过 POI 列表获取第一个点
-                if (!point && result.getPoiList && typeof result.getPoiList === 'function') {
-                    const poiList = result.getPoiList();
-                    console.log('poiList 数量：', poiList?.length);
-                    if (poiList && poiList.length > 0) {
-                        const poi = poiList[0];
-                        console.log('第一个 poi 对象：', poi);
-                        console.log('poi 属性：', Object.keys(poi));
-                        if (poi.getLngLat && typeof poi.getLngLat === 'function') {
-                            point = poi.getLngLat();
-                        } else if (poi.lnglat) {
-                            point = poi.lnglat;
-                        } else if (poi.location) {
-                            point = poi.location;
-                        } else if (poi.getLocation && typeof poi.getLocation === 'function') {
-                            point = poi.getLocation();
-                        }
+                // 方式1：直接从 result.location 获取经纬度
+                if (result.location && result.location.lon !== undefined && result.location.lat !== undefined) {
+                    const lon = parseFloat(result.location.lon);
+                    const lat = parseFloat(result.location.lat);
+                    if (!isNaN(lon) && !isNaN(lat)) {
+                        point = new T.LngLat(lon, lat);
+                        console.log('从 result.location 提取点：', point);
                     }
-                }
-
-                // 尝试方式3：如果 result 本身有 lnglat 属性
-                if (!point && result.lnglat) {
-                    point = result.lnglat;
                 }
 
                 if (point) {
@@ -167,9 +161,23 @@ function bindSearch() {
                     map.clearOverlays();
                     const marker = new T.Marker(point);
                     map.addOverlay(marker);
-                    // 自动触发逆地理编码填充表单
-                    const fakeEvent = { lnglat: point };
-                    onMapClick(fakeEvent);
+
+                    // 尝试获取省市区和详细地址
+                    let province = '', city = '', district = '', detail = '';
+
+                    // 如果有 addressComponent 则解析
+                    if (result.addressComponent) {
+                        province = result.addressComponent.province || '';
+                        city = result.addressComponent.city || '';
+                        district = result.addressComponent.district || '';
+                    }
+                    // 详细地址优先取 formatted_address
+                    if (result.formatted_address) {
+                        detail = result.formatted_address;
+                    }
+
+                    // 填充表单
+                    fillAddressToForm(currentFormId, province, city, district, detail);
                 } else {
                     console.error('无法从结果中提取坐标点，完整结果：', result);
                     alert('无法获取该地址的坐标点，请尝试更具体的地址');
@@ -185,13 +193,27 @@ function bindSearch() {
 function openMapPicker(formId) {
     currentFormId = formId;
     const modal = document.getElementById('mapModal');
+    if (!modal) {
+        console.error('找不到地图弹窗元素');
+        return;
+    }
+
+    // 显示弹窗
     modal.style.display = 'flex';
+
+    // 确保弹窗已经显示后再初始化地图
     setTimeout(() => {
-        initMap();
-        bindSearch();
-        if (map) map.panTo(new T.LngLat(116.397428, 39.90923));
+        const mapInstance = initMap();
+        if (mapInstance) {
+            bindSearch(); // 绑定搜索按钮
+            mapInstance.panTo(new T.LngLat(116.397428, 39.90923));
+        } else {
+            alert('地图加载失败，请刷新页面');
+        }
     }, 300);
 }
 
 // 暴露全局方法
 window.openMapPicker = openMapPicker;
+
+console.log('天地图API版本：', T?.version || '未知');
