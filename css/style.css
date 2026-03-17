@@ -17,14 +17,14 @@ body {
     display: flex;
     width: 1300px;
     max-width: 95vw;
-    height: 90vh;
+    height: 90vh;          /* 保持固定高度 */
+    min-height: 600px;      /* 增加最小高度防止过矮 */
     background: white;
     border-radius: 32px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.08);
     overflow: hidden;
 }
 
-/* 左侧菜单 */
 .sidebar {
     width: 260px;
     background: #2d3e50;
@@ -32,6 +32,8 @@ body {
     padding: 32px 0;
     display: flex;
     flex-direction: column;
+    height: 100%;           /* 确保填满父容器 */
+    flex-shrink: 0;          /* 防止被压缩 */
 }
 
 .logo {
@@ -243,11 +245,12 @@ button[type="submit"]:hover {
 /* 响应式 */
 /* 手机端优化 */
 @media (max-width: 800px) {
-    .container {
-        flex-direction: column;
-        height: auto;
-        border-radius: 0;
+    .sidebar {
+        height: auto;        /* 手机端允许自适应 */
+        padding: 12px 8px;
     }
+    /* ... 其他规则 ... */
+}
     .sidebar {
         width: 100%;
         padding: 12px 8px;
@@ -277,7 +280,10 @@ button[type="submit"]:hover {
     }
     .content {
         padding: 16px;
+        justify-content: flex-start; /* 新增：内容从顶部开始 */
     }
+    /* ... */
+}
     h2 {
         font-size: 1.6rem;
         margin-bottom: 16px;
@@ -304,4 +310,28 @@ button[type="submit"]:hover {
 .news-content {
     padding-left: 16px;
     border-left: 3px solid #f39c12;
+}
+.sidebar .logo-area {
+    display: flex;
+    align-items: center;
+    padding: 0 24px 16px 24px;
+    border-bottom: 1px solid #3f5567;
+    margin-bottom: 16px;
+}
+.sidebar .slogan {
+    color: #f39c12;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+}
+/* 手机端适配 */
+@media (max-width: 800px) {
+    .sidebar .logo-area {
+        padding: 0 12px 12px 12px;
+    }
+    .sidebar .slogan {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
 }

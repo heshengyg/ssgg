@@ -129,37 +129,47 @@ function setupSearch() {
     const searchInput = document.getElementById('searchAddress');
     if (!searchBtn || !searchInput) return;
 
-    searchBtn.addEventListener('click', function() {
-        const address = searchInput.value.trim();
-        if (!address) return;
+    // 移除之前可能绑定的相同事件，防止重复
+    searchBtn.replaceWith(searchBtn.cloneNode(true));
+    const newSearchBtn = document.getElementById('searchBtn');
 
-        // 使用地理编码获取坐标
+    newSearchBtn.addEventListener('click', function() {
+        const address = searchInput.value.trim();
+        if (!address) {
+            alert('请输入地址');
+            return;
+        }
+
+        // 使用天地图地理编码服务
         const geocoder = new T.Geocoder();
         geocoder.getPoint(address, function(result) {
             if (result.getStatus() === 0) {
                 const point = result.getLocation(); // 返回 T.LngLat 对象
+                // 将地图中心移动到该点
                 map.panTo(point);
-                // 可选：添加一个临时标记
-                const marker = new T.Marker(point);
+                // 清除旧标记并添加新标记
                 map.clearOverlays();
+                const marker = new T.Marker(point);
                 map.addOverlay(marker);
-                // 自动触发逆地理编码填充（可选，如果希望直接填充）
-                // 这里我们让用户自己点击地图，所以只定位不填充
+
+                // 可选：自动触发逆地理编码以填充表单
+                // 这里模拟点击标记（直接调用逆地理编码）
+                const fakeEvent = { lnglat: point };
+                onMapClick(fakeEvent);
             } else {
                 alert('未找到该地址，请重新输入');
             }
         });
     });
 }
-
 // 在 openMapPicker 中调用 setupSearch
 function openMapPicker(formId) {
     currentFormId = formId;
     const modal = document.getElementById('mapModal');
     modal.style.display = 'flex';
     setTimeout(() => {
-        initMap();
-        setupSearch(); // 绑定搜索事件
+        initMap();          // 地图初始化，内部绑定点击事件
+        setupSearch();      // 绑定搜索按钮事件
         if (map) map.panTo(new T.LngLat(116.397428, 39.90923));
     }, 300);
 }
