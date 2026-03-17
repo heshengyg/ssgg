@@ -241,20 +241,6 @@ button[type="submit"]:hover {
     border-radius: 16px;
     margin: 16px 0;
 }
-
-/* 响应式 */
-/* 手机端优化 */
-@media (max-width: 800px) {
-    .sidebar {
-        height: auto;        /* 手机端允许自适应 */
-        padding: 12px 8px;
-    }
-    /* ... 其他规则 ... */
-}
-    .sidebar {
-        width: 100%;
-        padding: 12px 8px;
-    }
     .logo {
         font-size: 1.5rem;
         padding-bottom: 12px;
