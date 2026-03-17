@@ -335,3 +335,16 @@ button[type="submit"]:hover {
         margin-bottom: 12px;
     }
 }
+.sidebar .slogan {
+    color: #f39c12;
+    font-size: 0.9rem;
+    text-align: center;
+    margin: -10px 0 20px 0;
+    letter-spacing: 1px;
+}
+@media (max-width: 800px) {
+    .sidebar .slogan {
+        font-size: 0.8rem;
+        margin: -5px 0 12px 0;
+    }
+}
