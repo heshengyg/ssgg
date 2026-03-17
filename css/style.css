@@ -241,29 +241,67 @@ button[type="submit"]:hover {
 }
 
 /* 响应式 */
+/* 手机端优化 */
 @media (max-width: 800px) {
     .container {
         flex-direction: column;
         height: auto;
+        border-radius: 0;
     }
     .sidebar {
         width: 100%;
-        padding: 16px;
+        padding: 12px 8px;
     }
     .logo {
-        padding-bottom: 16px;
+        font-size: 1.5rem;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+    }
+    .sidebar nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px;
     }
     .menu-item {
         display: inline-block;
         width: auto;
         border-left: none;
         border-bottom: 3px solid transparent;
-        padding: 12px 18px;
+        padding: 8px 12px;
+        font-size: 0.95rem;
     }
     .menu-item.active {
         border-bottom-color: #f39c12;
+        background: none;
     }
     .content {
-        padding: 24px;
+        padding: 16px;
     }
+    h2 {
+        font-size: 1.6rem;
+        margin-bottom: 16px;
+    }
+    form {
+        padding: 20px;
+    }
+    .address-group select {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+    .map-pick-btn, button[type="submit"] {
+        width: 100%;
+    }
+}.news-header {
+    transition: background 0.2s;
+    border-radius: 8px;
+    padding: 4px 0;
+}
+.news-header:hover {
+    background: #f0f2f5;
+}
+.news-content {
+    padding-left: 16px;
+    border-left: 3px solid #f39c12;
 }

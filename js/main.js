@@ -18,28 +18,35 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ---------- 加载平台要闻 (来自 news.json) ----------
-    fetch('data/news.json')
-        .then(res => res.json())
-        .then(newsArray => {
-            const newsListDiv = document.getElementById('news-list');
-            if (!newsListDiv) return;
-            newsListDiv.innerHTML = ''; // 清空
-            newsArray.forEach(item => {
-                const article = document.createElement('article');
-                article.className = 'news-item';
-                article.innerHTML = `
+// ---------- 加载平台要闻 (来自 news.json) ----------
+fetch('data/news.json')
+    .then(res => res.json())
+    .then(newsArray => {
+        const newsListDiv = document.getElementById('news-list');
+        if (!newsListDiv) return;
+        newsListDiv.innerHTML = '';
+        newsArray.forEach(item => {
+            const article = document.createElement('article');
+            article.className = 'news-item';
+            article.innerHTML = `
+                <div class="news-header" style="cursor: pointer;">
                     <h3>${item.title}</h3>
                     <div class="news-time">📅 ${item.time}</div>
-                    <div class="news-content">${item.content}</div>
-                `;
-                newsListDiv.appendChild(article);
+                </div>
+                <div class="news-content" style="display: none; margin-top: 12px;">${item.content}</div>
+            `;
+            const header = article.querySelector('.news-header');
+            const content = article.querySelector('.news-content');
+            header.addEventListener('click', () => {
+                content.style.display = content.style.display === 'none' ? 'block' : 'none';
             });
-        })
-        .catch(err => {
-            console.warn('新闻加载失败，请检查 data/news.json 格式或路径', err);
-            document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
+            newsListDiv.appendChild(article);
         });
-
+    })
+    .catch(err => {
+        console.warn('新闻加载失败', err);
+        document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
+    });
 // ---------- 加载省市区数据 (areas_nested.json) 并生成下拉框 ----------
 fetch('data/areas_nested.json')
     .then(res => {
