@@ -1,4 +1,4 @@
-// tianmap.js - 极简稳定版
+// tianmap.js - 增加自动定位按钮，定位后放大到最大比例
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
@@ -95,7 +95,6 @@ function bindSearch() {
     const searchInput = document.getElementById('searchAddress');
     if (!searchBtn || !searchInput) return;
 
-    // 确保按钮事件唯一
     const newBtn = searchBtn.cloneNode(true);
     searchBtn.parentNode.replaceChild(newBtn, searchBtn);
 
@@ -120,7 +119,6 @@ function bindSearch() {
                 return;
             }
 
-            // 提取坐标
             let lon, lat;
             if (result.location) {
                 lon = result.location.lon;
@@ -134,11 +132,10 @@ function bindSearch() {
             }
 
             const point = new T.LngLat(parseFloat(lon), parseFloat(lat));
-            console.log('定位到：', point);
             map.panTo(point);
-            map.setZoom(15);
+            map.setZoom(18); // 放大到最大比例
 
-            // 直接填充地址（如果有）
+            // 填充地址
             let province = '', city = '', district = '', detail = '';
             if (result.addressComponent) {
                 province = result.addressComponent.province || '';
@@ -153,6 +150,56 @@ function bindSearch() {
     });
 }
 
+function bindLocate() {
+    const locateBtn = document.getElementById('locateBtn');
+    if (!locateBtn) return;
+
+    const newBtn = locateBtn.cloneNode(true);
+    locateBtn.parentNode.replaceChild(newBtn, locateBtn);
+
+    newBtn.addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            alert('您的浏览器不支持地理定位');
+            return;
+        }
+
+        if (!map) {
+            alert('地图未初始化');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lon = position.coords.longitude;
+                const lat = position.coords.latitude;
+                const point = new T.LngLat(lon, lat);
+                map.panTo(point);
+                map.setZoom(18); // 最大比例
+
+                // 逆地理编码填充地址
+                const geocoder = new T.Geocoder();
+                geocoder.getLocation(point, function(result) {
+                    if (result.getStatus && result.getStatus() === 0) {
+                        const comp = result.getAddressComponent();
+                        const detail = result.getAddress() || '';
+                        fillAddressToForm(currentFormId, comp.province || '', comp.city || '', comp.district || '', detail);
+                    } else {
+                        // 如果逆地理编码失败，至少填充经纬度
+                        fillAddressToForm(currentFormId, '', '', '', `经度:${lon},纬度:${lat}`);
+                    }
+                });
+            },
+            function(error) {
+                let msg = '定位失败';
+                if (error.code === 1) msg = '用户拒绝了位置权限';
+                else if (error.code === 2) msg = '无法获取位置';
+                else if (error.code === 3) msg = '定位超时';
+                alert(msg);
+            }
+        );
+    });
+}
+
 function openMapPicker(formId) {
     currentFormId = formId;
     const modal = document.getElementById('mapModal');
@@ -160,6 +207,7 @@ function openMapPicker(formId) {
     setTimeout(() => {
         initMap();
         bindSearch();
+        bindLocate(); // 绑定定位按钮
         if (map) map.panTo(new T.LngLat(116.397428, 39.90923));
     }, 300);
 }
