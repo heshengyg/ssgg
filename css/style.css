@@ -284,38 +284,49 @@ button[type="submit"]:hover {
 @media (max-width: 800px) {
     .container {
         flex-direction: column;
-        height: auto;
+        height: 100vh;                /* 固定为视口高度，确保粘性定位有效 */
         border-radius: 0;
         min-height: auto;
     }
+
     .sidebar {
         width: 100%;
         height: auto;
         padding: 12px 8px;
+        position: sticky;              /* 粘性定位 */
+        top: 0;                        /* 固定在顶部 */
+        z-index: 10;                   /* 确保位于内容之上 */
+        background: #2d3e50;           /* 与侧边栏背景色一致，防止内容透出 */
     }
-    .logo-area {
-        padding: 0 12px 12px 12px;
+
+    .content {
+        flex: 1;                        /* 占据剩余高度 */
+        overflow-y: auto;                /* 允许滚动 */
+        padding: 16px;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch; /* iOS 平滑滚动 */
     }
+
     .logo-img {
         height: 30px;
     }
+
     .logo-text {
         font-size: 1.5rem;
     }
+
     .slogan-inline {
         font-size: 0.8rem;
-        white-space: normal;   /* 小屏幕允许换行 */
+        white-space: normal;            /* 小屏幕允许换行 */
     }
-    .slogan {
-        font-size: 0.8rem;
-        margin-bottom: 12px;
-    }
+
     .sidebar nav ul {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         gap: 4px;
     }
+
     .menu-item {
         display: inline-block;
         width: auto;
@@ -324,27 +335,29 @@ button[type="submit"]:hover {
         padding: 8px 12px;
         font-size: 0.95rem;
     }
+
     .menu-item.active {
         border-bottom-color: #f39c12;
         background: none;
     }
-    .content {
-        padding: 16px;
-        justify-content: flex-start;
-    }
+
     h2 {
         font-size: 1.6rem;
         margin-bottom: 16px;
     }
+
     form {
         padding: 20px;
     }
+
     .address-group select {
         width: 100%;
         margin-right: 0;
         margin-bottom: 8px;
     }
-    .map-pick-btn, button[type="submit"] {
+
+    .map-pick-btn,
+    button[type="submit"] {
         width: 100%;
     }
 }
