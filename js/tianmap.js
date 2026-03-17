@@ -1,40 +1,24 @@
-// tianmap.js
+// tianmap.js - 极简稳定版
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
-let currentMarkers = [];
 
 function initMap() {
-    const mapContainer = document.getElementById('mapContainer');
-    if (!mapContainer) {
-        console.error('地图容器不存在');
-        return null;
-    }
-
     if (!map) {
         try {
             map = new T.Map('mapContainer');
             map.centerAndZoom(new T.LngLat(116.397428, 39.90923), 12);
-            map.addControl(new T.Control.Zoom());
             if (!isClickBound) {
                 map.addEventListener('click', onMapClick);
                 isClickBound = true;
             }
             console.log('地图初始化成功');
         } catch (e) {
-            console.error('地图初始化失败：', e);
-            alert('地图初始化失败，请刷新页面重试');
-            return null;
+            console.error('初始化失败', e);
+            alert('地图初始化失败');
         }
     }
     return map;
-}
-
-function clearMarkers() {
-    if (currentMarkers.length) {
-        currentMarkers.forEach(marker => map.removeOverlay(marker));
-        currentMarkers = [];
-    }
 }
 
 function onMapClick(e) {
@@ -43,14 +27,9 @@ function onMapClick(e) {
     geocoder.getLocation(lnglat, function(result) {
         if (result.getStatus && result.getStatus() === 0) {
             const comp = result.getAddressComponent();
-            const detail = result.getAddress() || '';
-            if (comp) {
-                fillAddressToForm(currentFormId, comp.province || '', comp.city || '', comp.district || '', detail);
-            } else {
-                alert('无法解析地址，请手动填写');
-            }
+            fillAddressToForm(currentFormId, comp.province || '', comp.city || '', comp.district || '', result.getAddress() || '');
         } else {
-            alert('逆地理编码失败，请手动填写');
+            alert('逆地理编码失败');
         }
     });
     document.getElementById('mapModal').style.display = 'none';
@@ -116,11 +95,11 @@ function bindSearch() {
     const searchInput = document.getElementById('searchAddress');
     if (!searchBtn || !searchInput) return;
 
-    // 移除旧监听
-    searchBtn.replaceWith(searchBtn.cloneNode(true));
-    const newSearchBtn = document.getElementById('searchBtn');
+    // 确保按钮事件唯一
+    const newBtn = searchBtn.cloneNode(true);
+    searchBtn.parentNode.replaceChild(newBtn, searchBtn);
 
-    newSearchBtn.addEventListener('click', function() {
+    newBtn.addEventListener('click', function() {
         const address = searchInput.value.trim();
         if (!address) {
             alert('请输入地址');
@@ -128,25 +107,20 @@ function bindSearch() {
         }
 
         if (!map) {
-            alert('地图未初始化，请稍后重试');
+            alert('地图未初始化');
             return;
         }
 
         const geocoder = new T.Geocoder();
-        console.log('开始搜索地址：', address);
+        console.log('搜索地址：', address);
         geocoder.getPoint(address, function(result) {
-            console.log('地理编码结果：', result);
-
-            const status = result.status;
-            if (status !== '0' && status !== 0) {
+            console.log('搜索结果：', result);
+            if (!result || (result.status !== '0' && result.status !== 0)) {
                 alert('未找到该地址');
                 return;
             }
 
-            // 清除旧标记
-            clearMarkers();
-
-            // 尝试获取坐标
+            // 提取坐标
             let lon, lat;
             if (result.location) {
                 lon = result.location.lon;
@@ -154,27 +128,17 @@ function bindSearch() {
             } else if (result.poiList && result.poiList.length > 0) {
                 lon = result.poiList[0].location?.lon;
                 lat = result.poiList[0].location?.lat;
-            }
-
-            if (lon === undefined || lat === undefined) {
-                console.error('无法提取坐标', result);
-                alert('无法定位该地址');
+            } else {
+                alert('无法定位');
                 return;
             }
 
             const point = new T.LngLat(parseFloat(lon), parseFloat(lat));
-            console.log('坐标点：', point);
-
-            // 添加新标记
-            const marker = new T.Marker(point);
-            map.addOverlay(marker);
-            currentMarkers.push(marker);
-
-            // 移动到该点并缩放
+            console.log('定位到：', point);
             map.panTo(point);
             map.setZoom(15);
 
-            // 可选：直接填充地址信息（如果有）
+            // 直接填充地址（如果有）
             let province = '', city = '', district = '', detail = '';
             if (result.addressComponent) {
                 province = result.addressComponent.province || '';
@@ -185,9 +149,6 @@ function bindSearch() {
                 detail = result.formatted_address;
             }
             fillAddressToForm(currentFormId, province, city, district, detail);
-
-            // 不自动关闭弹窗，让用户确认
-            // alert('已定位，请点击地图上的标记确认');
         });
     });
 }
@@ -195,22 +156,13 @@ function bindSearch() {
 function openMapPicker(formId) {
     currentFormId = formId;
     const modal = document.getElementById('mapModal');
-    if (!modal) {
-        console.error('找不到地图弹窗元素');
-        return;
-    }
-
     modal.style.display = 'flex';
     setTimeout(() => {
-        const mapInstance = initMap();
-        if (mapInstance) {
-            bindSearch();
-            mapInstance.panTo(new T.LngLat(116.397428, 39.90923));
-        } else {
-            alert('地图加载失败，请刷新页面');
-        }
+        initMap();
+        bindSearch();
+        if (map) map.panTo(new T.LngLat(116.397428, 39.90923));
     }, 300);
 }
 
 window.openMapPicker = openMapPicker;
-console.log('天地图API版本：', T?.version || '未知');
+console.log('天地图API版本：', T?.version);
