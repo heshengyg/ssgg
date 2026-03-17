@@ -17,14 +17,15 @@ body {
     display: flex;
     width: 1300px;
     max-width: 95vw;
-    height: 90vh;          /* 保持固定高度 */
-    min-height: 600px;      /* 增加最小高度防止过矮 */
+    height: 90vh;
+    min-height: 600px;
     background: white;
     border-radius: 32px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.08);
     overflow: hidden;
 }
 
+/* 左侧菜单 */
 .sidebar {
     width: 260px;
     background: #2d3e50;
@@ -32,15 +33,26 @@ body {
     padding: 32px 0;
     display: flex;
     flex-direction: column;
-    height: 100%;           /* 确保填满父容器 */
-    flex-shrink: 0;          /* 防止被压缩 */
+    height: 100%;
+    flex-shrink: 0;
 }
 
-.logo {
+.logo-area {
+    padding: 0 24px 16px 24px;
+    border-bottom: 1px solid #3f5567;
+    margin-bottom: 8px;
+}
+
+.logo-text {
     font-size: 1.8rem;
     font-weight: 400;
-    padding: 0 24px 32px 24px;
-    border-bottom: 1px solid #3f5567;
+    letter-spacing: 1px;
+}
+
+.slogan {
+    color: #f39c12;
+    font-size: 0.9rem;
+    text-align: center;
     margin-bottom: 24px;
     letter-spacing: 1px;
 }
@@ -105,6 +117,17 @@ h2 {
     border-left: 6px solid #f39c12;
 }
 
+.news-header {
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 8px;
+    padding: 4px 0;
+}
+
+.news-header:hover {
+    background: #f0f2f5;
+}
+
 .news-item h3 {
     font-size: 1.4rem;
     color: #2c3e50;
@@ -118,6 +141,10 @@ h2 {
 }
 
 .news-content {
+    display: none;
+    margin-top: 12px;
+    padding-left: 16px;
+    border-left: 3px solid #f39c12;
     line-height: 1.7;
     color: #34495e;
 }
@@ -241,9 +268,28 @@ button[type="submit"]:hover {
     border-radius: 16px;
     margin: 16px 0;
 }
-    .logo {
+
+/* 手机端优化 */
+@media (max-width: 800px) {
+    .container {
+        flex-direction: column;
+        height: auto;
+        border-radius: 0;
+        min-height: auto;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 12px 8px;
+    }
+    .logo-area {
+        padding: 0 12px 12px 12px;
+    }
+    .logo-text {
         font-size: 1.5rem;
-        padding-bottom: 12px;
+    }
+    .slogan {
+        font-size: 0.8rem;
         margin-bottom: 12px;
     }
     .sidebar nav ul {
@@ -266,10 +312,8 @@ button[type="submit"]:hover {
     }
     .content {
         padding: 16px;
-        justify-content: flex-start; /* 新增：内容从顶部开始 */
+        justify-content: flex-start;
     }
-    /* ... */
-}
     h2 {
         font-size: 1.6rem;
         margin-bottom: 16px;
@@ -284,53 +328,5 @@ button[type="submit"]:hover {
     }
     .map-pick-btn, button[type="submit"] {
         width: 100%;
-    }
-}.news-header {
-    transition: background 0.2s;
-    border-radius: 8px;
-    padding: 4px 0;
-}
-.news-header:hover {
-    background: #f0f2f5;
-}
-.news-content {
-    padding-left: 16px;
-    border-left: 3px solid #f39c12;
-}
-.sidebar .logo-area {
-    display: flex;
-    align-items: center;
-    padding: 0 24px 16px 24px;
-    border-bottom: 1px solid #3f5567;
-    margin-bottom: 16px;
-}
-.sidebar .slogan {
-    color: #f39c12;
-    font-size: 0.9rem;
-    text-align: center;
-    margin-bottom: 20px;
-    letter-spacing: 1px;
-}
-/* 手机端适配 */
-@media (max-width: 800px) {
-    .sidebar .logo-area {
-        padding: 0 12px 12px 12px;
-    }
-    .sidebar .slogan {
-        font-size: 0.8rem;
-        margin-bottom: 12px;
-    }
-}
-.sidebar .slogan {
-    color: #f39c12;
-    font-size: 0.9rem;
-    text-align: center;
-    margin: -10px 0 20px 0;
-    letter-spacing: 1px;
-}
-@media (max-width: 800px) {
-    .sidebar .slogan {
-        font-size: 0.8rem;
-        margin: -5px 0 12px 0;
     }
 }

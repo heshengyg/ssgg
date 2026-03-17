@@ -1,6 +1,6 @@
 // tianmap.js
 let map = null;
-let currentFormId = null; // 当前操作的表单标识 'supplier' 或 'merchant'
+let currentFormId = null;
 let isClickBound = false;
 
 function initMap() {
@@ -21,9 +21,7 @@ function onMapClick(e) {
     const geocoder = new T.Geocoder();
     geocoder.getLocation(lnglat, function(result) {
         if (result.getStatus() === 0) {
-            // 获取地址组件（省市区）
             const comp = result.getAddressComponent();
-            // 获取详细地址（街道+门牌号）
             const detail = result.getAddress() || '';
 
             if (comp) {
@@ -48,17 +46,14 @@ function fillAddressToForm(formId, province, city, district, detail) {
     const distSelect = document.getElementById(prefix + 'District');
     const detailInput = document.querySelector(`#${formId}Form input[name="detailAddress"]`);
 
-    // 辅助函数：智能匹配（去除省市县后缀）
     function matchText(selectEl, text) {
         if (!selectEl) return false;
-        // 尝试精确匹配
         for (let opt of selectEl.options) {
             if (opt.text === text) {
                 selectEl.value = opt.value;
                 return true;
             }
         }
-        // 尝试模糊匹配（去除“市”、“省”、“区”等）
         const clean = text.replace(/[省市县区]$/, '');
         for (let opt of selectEl.options) {
             if (opt.text.replace(/[省市县区]$/, '') === clean) {
@@ -69,13 +64,11 @@ function fillAddressToForm(formId, province, city, district, detail) {
         return false;
     }
 
-    // 设置省
     if (provSelect) {
         matchText(provSelect, province);
         provSelect.dispatchEvent(new Event('change'));
     }
 
-    // 等待城市列表加载（轮询检查）
     const waitForCity = (callback) => {
         if (citySelect && citySelect.options.length > 1) {
             callback();
@@ -88,7 +81,6 @@ function fillAddressToForm(formId, province, city, district, detail) {
         matchText(citySelect, city);
         citySelect.dispatchEvent(new Event('change'));
 
-        // 等待区县列表加载
         const waitForDistrict = () => {
             if (distSelect && distSelect.options.length > 1) {
                 matchText(distSelect, district);
@@ -102,34 +94,11 @@ function fillAddressToForm(formId, province, city, district, detail) {
     if (detailInput) detailInput.value = detail;
 }
 
-function setSelectByText(selectEl, text) {
-    if (!selectEl) return;
-    for (let opt of selectEl.options) {
-        if (opt.text === text) {
-            selectEl.value = opt.value;
-            return;
-        }
-    }
-}
-
-function openMapPicker(formId) {
-    currentFormId = formId;
-    const modal = document.getElementById('mapModal');
-    modal.style.display = 'flex';
-    setTimeout(() => {
-        initMap();
-        if (map) map.panTo(new T.LngLat(116.397428, 39.90923));
-    }, 300);
-}
-
-window.openMapPicker = openMapPicker;
-// 搜索功能
 function setupSearch() {
     const searchBtn = document.getElementById('searchBtn');
     const searchInput = document.getElementById('searchAddress');
     if (!searchBtn || !searchInput) return;
 
-    // 移除之前可能绑定的相同事件，防止重复
     searchBtn.replaceWith(searchBtn.cloneNode(true));
     const newSearchBtn = document.getElementById('searchBtn');
 
@@ -140,20 +109,14 @@ function setupSearch() {
             return;
         }
 
-        // 使用天地图地理编码服务
         const geocoder = new T.Geocoder();
         geocoder.getPoint(address, function(result) {
             if (result.getStatus() === 0) {
-                const point = result.getLocation(); // 返回 T.LngLat 对象
-                // 将地图中心移动到该点
+                const point = result.getLocation();
                 map.panTo(point);
-                // 清除旧标记并添加新标记
                 map.clearOverlays();
                 const marker = new T.Marker(point);
                 map.addOverlay(marker);
-
-                // 可选：自动触发逆地理编码以填充表单
-                // 这里模拟点击标记（直接调用逆地理编码）
                 const fakeEvent = { lnglat: point };
                 onMapClick(fakeEvent);
             } else {
@@ -162,14 +125,16 @@ function setupSearch() {
         });
     });
 }
-// 在 openMapPicker 中调用 setupSearch
+
 function openMapPicker(formId) {
     currentFormId = formId;
     const modal = document.getElementById('mapModal');
     modal.style.display = 'flex';
     setTimeout(() => {
-        initMap();          // 地图初始化，内部绑定点击事件
-        setupSearch();      // 绑定搜索按钮事件
+        initMap();
+        setupSearch();
         if (map) map.panTo(new T.LngLat(116.397428, 39.90923));
     }, 300);
 }
+
+window.openMapPicker = openMapPicker;
