@@ -38,31 +38,34 @@ body {
 }
 
 .logo-area {
+    display: flex;
+    align-items: center;      /* 垂直居中对齐 */
+    flex-wrap: wrap;          /* 小屏幕允许换行 */
     padding: 0 24px 16px 24px;
     border-bottom: 1px solid #3f5567;
     margin-bottom: 8px;
 }
 
 .logo-img {
-    height: 40px;          /* 根据您的图片调整合适高度 */
+    height: 40px;
     width: auto;
-    vertical-align: middle;
     margin-right: 8px;
+    vertical-align: middle;
 }
-
 .logo-text {
     font-size: 1.8rem;
     font-weight: 400;
     letter-spacing: 1px;
+    margin-right: 8px;        /* 与广告语的间距 */
     vertical-align: middle;
 }
 
-.slogan {
-    color: #f39c12;
-    font-size: 0.9rem;
-    text-align: center;
-    margin-bottom: 24px;
+.slogan-inline {
+    font-size: 0.9rem;        /* 小于主标题 */
+    color: #f39c12;           /* 橙色 */
     letter-spacing: 1px;
+    white-space: nowrap;      /* 默认不换行 */
+    vertical-align: middle;
 }
 
 .sidebar nav ul {
@@ -294,10 +297,14 @@ button[type="submit"]:hover {
         padding: 0 12px 12px 12px;
     }
     .logo-img {
-        height: 30px;      /* 手机端稍微缩小 */
+        height: 30px;
     }
     .logo-text {
         font-size: 1.5rem;
+    }
+    .slogan-inline {
+        font-size: 0.8rem;
+        white-space: normal;   /* 小屏幕允许换行 */
     }
     .slogan {
         font-size: 0.8rem;
