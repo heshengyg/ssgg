@@ -30,7 +30,7 @@ function onMapClick(e) {
     geocoder.getLocation(lnglat, function(result) {
         console.log('逆地理编码结果：', result);
         if (result.getStatus && result.getStatus() === 0) {
-            // 获取地址组件（兼容不同返回格式）
+            // 获取地址组件
             let comp = null;
             if (typeof result.getAddressComponent === 'function') {
                 comp = result.getAddressComponent();
@@ -40,14 +40,20 @@ function onMapClick(e) {
             const detail = typeof result.getAddress === 'function' ? result.getAddress() : (result.formatted_address || '');
 
             if (comp) {
+                // 打印 comp 的所有属性
+                console.log('comp 对象：', comp);
+                console.log('comp.province:', comp.province);
+                console.log('comp.city:', comp.city);
+                console.log('comp.district:', comp.district);
+
                 let province = comp.province || '';
                 const city = comp.city || '';
                 const district = comp.district || '';
 
-                // 处理直辖市：如果 province 为空且 city 是直辖市，则用 city 作为 province
+                // 直辖市补全
                 if (!province && municipalities.includes(city)) {
                     province = city;
-                    console.log('直辖市自动补全 province：', province);
+                    console.log('直辖市自动补全 province 为：', province);
                 }
 
                 fillAddressToForm(currentFormId, province, city, district, detail);
