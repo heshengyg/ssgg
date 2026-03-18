@@ -1,4 +1,4 @@
-// tianmap.js - 增强版：修复直辖市省份匹配、增加模糊匹配
+// tianmap.js - 修复直辖市 province 为空的问题
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
@@ -28,18 +28,29 @@ function onMapClick(e) {
     const lnglat = e.lnglat;
     const geocoder = new T.Geocoder();
     geocoder.getLocation(lnglat, function(result) {
-        console.log('逆地理编码结果：', result); // 打印完整对象
+        console.log('逆地理编码结果：', result);
         if (result.getStatus && result.getStatus() === 0) {
-            // 尝试多种方式获取地址组件
+            // 获取地址组件（兼容不同返回格式）
             let comp = null;
-            if (result.getAddressComponent) {
+            if (typeof result.getAddressComponent === 'function') {
                 comp = result.getAddressComponent();
             } else if (result.addressComponent) {
                 comp = result.addressComponent;
             }
-            const detail = result.getAddress ? result.getAddress() : (result.formatted_address || '');
+            const detail = typeof result.getAddress === 'function' ? result.getAddress() : (result.formatted_address || '');
+
             if (comp) {
-                fillAddressToForm(currentFormId, comp.province || '', comp.city || '', comp.district || '', detail);
+                let province = comp.province || '';
+                const city = comp.city || '';
+                const district = comp.district || '';
+
+                // 处理直辖市：如果 province 为空且 city 是直辖市，则用 city 作为 province
+                if (!province && municipalities.includes(city)) {
+                    province = city;
+                    console.log('直辖市自动补全 province：', province);
+                }
+
+                fillAddressToForm(currentFormId, province, city, district, detail);
             } else {
                 alert('无法解析地址，请手动填写');
             }
@@ -49,6 +60,7 @@ function onMapClick(e) {
     });
     document.getElementById('mapModal').style.display = 'none';
 }
+
 function fillAddressToForm(formId, province, city, district, detail) {
     const prefix = formId === 'supplier' ? 'supplier' : 'merchant';
     const provSelect = document.getElementById(prefix + 'Province');
@@ -270,9 +282,24 @@ function bindLocate() {
                 const geocoder = new T.Geocoder();
                 geocoder.getLocation(point, function(result) {
                     if (result.getStatus && result.getStatus() === 0) {
-                        const comp = result.getAddressComponent();
-                        const detail = result.getAddress() || '';
-                        fillAddressToForm(currentFormId, comp.province || '', comp.city || '', comp.district || '', detail);
+                        let comp = null;
+                        if (typeof result.getAddressComponent === 'function') {
+                            comp = result.getAddressComponent();
+                        } else if (result.addressComponent) {
+                            comp = result.addressComponent;
+                        }
+                        const detail = typeof result.getAddress === 'function' ? result.getAddress() : (result.formatted_address || '');
+                        if (comp) {
+                            let province = comp.province || '';
+                            const city = comp.city || '';
+                            const district = comp.district || '';
+                            if (!province && municipalities.includes(city)) {
+                                province = city;
+                            }
+                            fillAddressToForm(currentFormId, province, city, district, detail);
+                        } else {
+                            fillAddressToForm(currentFormId, '', '', '', `经度:${lon},纬度:${lat}`);
+                        }
                     } else {
                         fillAddressToForm(currentFormId, '', '', '', `经度:${lon},纬度:${lat}`);
                     }
