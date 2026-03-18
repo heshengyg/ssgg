@@ -1,10 +1,10 @@
-// tianmap.js - 修复直辖市 province 为空的问题
+// tianmap.js - 最终版：修复直辖市 province 为空的问题，支持简称匹配
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
 
-// 直辖市列表
-const municipalities = ['北京市', '天津市', '上海市', '重庆市'];
+// 直辖市列表（包含全称和可能的简称）
+const municipalities = ['北京市', '天津市', '上海市', '重庆市', '北京', '天津', '上海', '重庆'];
 
 function initMap() {
     if (!map) {
@@ -30,7 +30,6 @@ function onMapClick(e) {
     geocoder.getLocation(lnglat, function(result) {
         console.log('逆地理编码结果：', result);
         if (result.getStatus && result.getStatus() === 0) {
-            // 获取地址组件
             let comp = null;
             if (typeof result.getAddressComponent === 'function') {
                 comp = result.getAddressComponent();
@@ -40,20 +39,28 @@ function onMapClick(e) {
             const detail = typeof result.getAddress === 'function' ? result.getAddress() : (result.formatted_address || '');
 
             if (comp) {
-                // 打印 comp 的所有属性
-                console.log('comp 对象：', comp);
-                console.log('comp.province:', comp.province);
-                console.log('comp.city:', comp.city);
-                console.log('comp.district:', comp.district);
-
+                // 打印 comp 的所有属性（便于调试）
+                console.log('comp JSON:', JSON.stringify(comp, null, 2));
+                
                 let province = comp.province || '';
                 const city = comp.city || '';
                 const district = comp.district || '';
 
-                // 直辖市补全
-                if (!province && municipalities.includes(city)) {
-                    province = city;
-                    console.log('直辖市自动补全 province 为：', province);
+                // 直辖市补全：如果 province 为空，且 city 是直辖市或其简称
+                if (!province) {
+                    // 检查 city 是否匹配任一直辖市
+                    for (let m of municipalities) {
+                        if (city.includes(m) || m.includes(city)) {
+                            // 使用标准名称（第一个字符可能是直辖市全称，这里取前两个字符加“市”？但最好用已知的全称）
+                            // 简单处理：如果 city 包含“北京”则赋值为“北京市”，以此类推
+                            if (city.includes('北京')) province = '北京市';
+                            else if (city.includes('天津')) province = '天津市';
+                            else if (city.includes('上海')) province = '上海市';
+                            else if (city.includes('重庆')) province = '重庆市';
+                            console.log('直辖市自动补全 province 为：', province);
+                            break;
+                        }
+                    }
                 }
 
                 fillAddressToForm(currentFormId, province, city, district, detail);
@@ -102,7 +109,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
             }
         }
 
-        // 3. 包含匹配
+        // 3. 包含匹配（例如 text "北京" 匹配 "北京市"）
         for (let opt of selectEl.options) {
             if (opt.text.includes(text) || text.includes(opt.text)) {
                 selectEl.value = opt.value;
@@ -120,15 +127,20 @@ function fillAddressToForm(formId, province, city, district, detail) {
     if (provSelect) {
         provMatched = matchText(provSelect, province, '省份');
         // 如果省份是直辖市且未匹配成功，尝试更宽松的模糊匹配
-        if (!provMatched && municipalities.includes(province)) {
-            const shortName = province.replace(/[市]$/, ''); // 去掉末尾的“市”
-            console.log(`直辖市未匹配，尝试模糊匹配 "${shortName}"`);
-            for (let opt of provSelect.options) {
-                if (opt.text.includes(shortName)) {
-                    provSelect.value = opt.value;
-                    console.log(`直辖市模糊匹配成功：${province} -> ${opt.text}`);
-                    provMatched = true;
-                    break;
+        if (!provMatched) {
+            // 检查 province 是否是直辖市
+            const isMunic = municipalities.some(m => province.includes(m) || m.includes(province));
+            if (isMunic) {
+                // 尝试用简称匹配（例如 "重庆" 匹配 "重庆市"）
+                const shortName = province.replace(/[市]$/, '');
+                console.log(`直辖市未精确匹配，尝试模糊匹配 "${shortName}"`);
+                for (let opt of provSelect.options) {
+                    if (opt.text.includes(shortName)) {
+                        provSelect.value = opt.value;
+                        console.log(`直辖市模糊匹配成功：${province} -> ${opt.text}`);
+                        provMatched = true;
+                        break;
+                    }
                 }
             }
         }
@@ -136,13 +148,17 @@ function fillAddressToForm(formId, province, city, district, detail) {
         if (provMatched) {
             provSelect.dispatchEvent(new Event('change'));
         } else {
-            console.warn('省份匹配失败，但仍尝试触发 change');
+            console.warn('省份匹配失败，下拉框选项如下：');
+            for (let opt of provSelect.options) {
+                console.log(`- ${opt.text} (${opt.value})`);
+            }
+            // 即使失败，也触发 change 以便城市下拉可能加载（如果有默认省份）
             provSelect.dispatchEvent(new Event('change'));
         }
     }
 
-    // 2. 处理城市和区县
-    const isMunicipality = municipalities.includes(province);
+    // 2. 判断是否为直辖市（使用 province 或 city 判断）
+    const isMunicipality = municipalities.some(m => province.includes(m) || m.includes(province));
 
     const waitForCity = (callback) => {
         if (citySelect && citySelect.options.length > 1) {
@@ -299,9 +315,20 @@ function bindLocate() {
                             let province = comp.province || '';
                             const city = comp.city || '';
                             const district = comp.district || '';
-                            if (!province && municipalities.includes(city)) {
-                                province = city;
+
+                            // 直辖市补全
+                            if (!province) {
+                                for (let m of municipalities) {
+                                    if (city.includes(m) || m.includes(city)) {
+                                        if (city.includes('北京')) province = '北京市';
+                                        else if (city.includes('天津')) province = '天津市';
+                                        else if (city.includes('上海')) province = '上海市';
+                                        else if (city.includes('重庆')) province = '重庆市';
+                                        break;
+                                    }
+                                }
                             }
+
                             fillAddressToForm(currentFormId, province, city, district, detail);
                         } else {
                             fillAddressToForm(currentFormId, '', '', '', `经度:${lon},纬度:${lat}`);
