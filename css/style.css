@@ -263,14 +263,14 @@ button[type="submit"]:hover {
 
 .close {
     position: absolute;
-    right: 24px;
-    top: 16px;
+    right: 20px;          /* 从右侧偏移20px */
+    top: 15px;            /* 从顶部偏移15px */
     font-size: 28px;
     font-weight: 600;
     color: #aaa;
     cursor: pointer;
+    z-index: 10;          /* 确保在顶层 */
 }
-
 .close:hover {
     color: #333;
 }

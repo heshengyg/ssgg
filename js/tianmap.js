@@ -42,21 +42,51 @@ function fillAddressToForm(formId, province, city, district, detail) {
     const distSelect = document.getElementById(prefix + 'District');
     const detailInput = document.querySelector(`#${formId}Form input[name="detailAddress"]`);
 
+    console.log('填充地址：', province, city, district, detail);
+
+    // 增强匹配函数：支持完全匹配、去除后缀匹配、包含匹配
     function matchText(selectEl, text) {
         if (!selectEl) return false;
+        if (!text) return false;
+
+        console.log(`尝试匹配 "${text}" 在下拉框 ${selectEl.id} 中`);
+
+        // 收集所有选项文本供调试
+        const optionsText = [];
+        for (let opt of selectEl.options) {
+            optionsText.push(opt.text);
+        }
+        console.log('下拉框选项：', optionsText);
+
+        // 1. 精确匹配
         for (let opt of selectEl.options) {
             if (opt.text === text) {
                 selectEl.value = opt.value;
+                console.log(`精确匹配成功：${text} -> ${opt.value}`);
                 return true;
             }
         }
+
+        // 2. 去除省市县区后缀后匹配
         const clean = text.replace(/[省市县区]$/, '');
         for (let opt of selectEl.options) {
             if (opt.text.replace(/[省市县区]$/, '') === clean) {
                 selectEl.value = opt.value;
+                console.log(`去除后缀匹配成功：${text} -> ${opt.value}`);
                 return true;
             }
         }
+
+        // 3. 包含匹配（例如 text 是 "北京"，选项中包含 "北京市"）
+        for (let opt of selectEl.options) {
+            if (opt.text.includes(text) || text.includes(opt.text)) {
+                selectEl.value = opt.value;
+                console.log(`包含匹配成功：${text} -> ${opt.value}`);
+                return true;
+            }
+        }
+
+        console.log(`未找到匹配项：${text}`);
         return false;
     }
 
@@ -67,8 +97,10 @@ function fillAddressToForm(formId, province, city, district, detail) {
 
     const waitForCity = (callback) => {
         if (citySelect && citySelect.options.length > 1) {
+            console.log('城市下拉已加载，开始匹配城市');
             callback();
         } else {
+            console.log('等待城市下拉加载...');
             setTimeout(() => waitForCity(callback), 50);
         }
     };
@@ -79,8 +111,10 @@ function fillAddressToForm(formId, province, city, district, detail) {
 
         const waitForDistrict = () => {
             if (distSelect && distSelect.options.length > 1) {
+                console.log('区县下拉已加载，开始匹配区县');
                 matchText(distSelect, district);
             } else {
+                console.log('等待区县下拉加载...');
                 setTimeout(waitForDistrict, 50);
             }
         };
@@ -89,7 +123,6 @@ function fillAddressToForm(formId, province, city, district, detail) {
 
     if (detailInput) detailInput.value = detail;
 }
-
 function bindSearch() {
     const searchBtn = document.getElementById('searchBtn');
     const searchInput = document.getElementById('searchAddress');
