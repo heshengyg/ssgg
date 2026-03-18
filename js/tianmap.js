@@ -1,4 +1,4 @@
-// tianmap.js - 最终版：确保直辖市传递，自动填充失败则提示手动
+// tianmap.js - 最终版：加强区县提取和匹配
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
@@ -38,10 +38,16 @@ function onMapClick(e) {
             if (comp) {
                 console.log('comp JSON:', JSON.stringify(comp, null, 2));
                 
-                // 提取省市区
+                // 提取省市区 - 尝试多种可能的字段名
                 let province = comp.province || '';
-                const city = comp.city || '';
-                const district = comp.district || '';
+                let city = comp.city || '';
+                let district = comp.district || comp.county || comp.area || ''; // 增加可能的区县字段
+                
+                // 如果 district 仍为空，尝试从 result 中获取
+                if (!district) {
+                    // 有些版本可能在 result 中有 district
+                    district = result.district || '';
+                }
 
                 // 直辖市补全（如果 province 为空但 city 是直辖市）
                 if (!province) {
@@ -59,7 +65,7 @@ function onMapClick(e) {
                     else if (detail.includes('上海市')) province = '上海市';
                 }
 
-                console.log('最终要填充的 province:', province);
+                console.log('最终要填充的 province:', province, 'city:', city, 'district:', district);
                 fillAddressToForm(currentFormId, province, city, district, detail);
             } else {
                 alert('无法解析地址，请手动填写');
@@ -148,6 +154,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
     const waitForDistrict = () => {
         if (distSelect && distSelect.options.length > 1) {
             console.log('区县下拉已加载，选项数：', distSelect.options.length);
+            // 注意：此时 province 已经是直辖市，district 是区县名称
             matchText(distSelect, district, '区县');
         } else {
             console.log('等待区县下拉加载...');
@@ -173,6 +180,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
             }
             citySelect.dispatchEvent(new Event('change'));
         }
+        // 等待区县加载
         setTimeout(waitForDistrict, 300);
     } else {
         waitForCity(() => {
@@ -188,7 +196,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
     }
 }
 
-// 以下函数保持不变（bindSearch, bindLocate, openMapPicker）
+// 以下函数保持不变
 function bindSearch() {
     const searchBtn = document.getElementById('searchBtn');
     const searchInput = document.getElementById('searchAddress');
@@ -284,8 +292,8 @@ function bindLocate() {
                         const detail = typeof result.getAddress === 'function' ? result.getAddress() : (result.formatted_address || '');
                         if (comp) {
                             let province = comp.province || '';
-                            const city = comp.city || '';
-                            const district = comp.district || '';
+                            let city = comp.city || '';
+                            let district = comp.district || comp.county || comp.area || '';
                             if (!province) {
                                 if (city.includes('北京') || city.includes('天津') || city.includes('上海') || city.includes('重庆')) {
                                     province = city;
