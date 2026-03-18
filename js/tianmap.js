@@ -28,16 +28,27 @@ function onMapClick(e) {
     const lnglat = e.lnglat;
     const geocoder = new T.Geocoder();
     geocoder.getLocation(lnglat, function(result) {
+        console.log('逆地理编码结果：', result); // 打印完整对象
         if (result.getStatus && result.getStatus() === 0) {
-            const comp = result.getAddressComponent();
-            fillAddressToForm(currentFormId, comp.province || '', comp.city || '', comp.district || '', result.getAddress() || '');
+            // 尝试多种方式获取地址组件
+            let comp = null;
+            if (result.getAddressComponent) {
+                comp = result.getAddressComponent();
+            } else if (result.addressComponent) {
+                comp = result.addressComponent;
+            }
+            const detail = result.getAddress ? result.getAddress() : (result.formatted_address || '');
+            if (comp) {
+                fillAddressToForm(currentFormId, comp.province || '', comp.city || '', comp.district || '', detail);
+            } else {
+                alert('无法解析地址，请手动填写');
+            }
         } else {
             alert('逆地理编码失败');
         }
     });
     document.getElementById('mapModal').style.display = 'none';
 }
-
 function fillAddressToForm(formId, province, city, district, detail) {
     const prefix = formId === 'supplier' ? 'supplier' : 'merchant';
     const provSelect = document.getElementById(prefix + 'Province');
