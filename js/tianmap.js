@@ -1,4 +1,4 @@
-// tianmap.js - 增强版：修复直辖市填充、增加调试日志
+// tianmap.js - 增强版：修复直辖市省份匹配、增加模糊匹配
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
@@ -73,7 +73,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
             }
         }
 
-        // 3. 包含匹配（例如 text "北京" 匹配 "北京市"）
+        // 3. 包含匹配
         for (let opt of selectEl.options) {
             if (opt.text.includes(text) || text.includes(opt.text)) {
                 selectEl.value = opt.value;
@@ -87,18 +87,32 @@ function fillAddressToForm(formId, province, city, district, detail) {
     }
 
     // 1. 匹配省份
+    let provMatched = false;
     if (provSelect) {
-        const provMatched = matchText(provSelect, province, '省份');
+        provMatched = matchText(provSelect, province, '省份');
+        // 如果省份是直辖市且未匹配成功，尝试更宽松的模糊匹配
+        if (!provMatched && municipalities.includes(province)) {
+            const shortName = province.replace(/[市]$/, ''); // 去掉末尾的“市”
+            console.log(`直辖市未匹配，尝试模糊匹配 "${shortName}"`);
+            for (let opt of provSelect.options) {
+                if (opt.text.includes(shortName)) {
+                    provSelect.value = opt.value;
+                    console.log(`直辖市模糊匹配成功：${province} -> ${opt.text}`);
+                    provMatched = true;
+                    break;
+                }
+            }
+        }
+
         if (provMatched) {
             provSelect.dispatchEvent(new Event('change'));
         } else {
-            console.warn('省份匹配失败，无法继续');
-            // 即使省份匹配失败，仍然尝试触发 change，或许有默认选项
+            console.warn('省份匹配失败，但仍尝试触发 change');
             provSelect.dispatchEvent(new Event('change'));
         }
     }
 
-    // 2. 处理城市和区县（根据是否为直辖市分支）
+    // 2. 处理城市和区县
     const isMunicipality = municipalities.includes(province);
 
     const waitForCity = (callback) => {
