@@ -400,3 +400,22 @@ button[type="submit"]:hover {
     white-space: nowrap;
     padding: 8px 0;
 }
+
+.submit-link {
+    display: inline-block;
+    background: #f39c12;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    transition: 0.15s;
+}
+.submit-link:hover {
+    background: #e67e22;
+}
