@@ -280,36 +280,6 @@ button[type="submit"]:hover {
     margin: 16px 0;
 }
 
-/* 地图弹窗按钮组 */
-.button-group {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-.button-group input {
-    flex: 2;
-    min-width: 0;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-}
-.button-group button {
-    flex: 1;
-    padding: 8px 0;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    min-width: 60px;
-}
-#searchBtn {
-    background: #3498db;
-}
-#locateBtn {
-    background: #27ae60;
-}
-
 /* 手机端优化 */
 @media (max-width: 800px) {
     .container {
@@ -390,4 +360,43 @@ button[type="submit"]:hover {
     button[type="submit"] {
         width: 100%;
     }
+}
+
+/* 地图弹窗头部布局 */
+.modal-content {
+    position: relative;
+    padding-top: 50px; /* 为关闭按钮留出空间 */
+}
+
+.close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    z-index: 20;
+    font-size: 28px;
+    font-weight: 600;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #333;
+}
+
+/* 搜索行按钮组 */
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.button-group input {
+    flex: 2; /* 搜索框占更多空间 */
+    min-width: 0; /* 防止溢出 */
+}
+
+.button-group button {
+    flex: 1; /* 两个按钮等宽 */
+    white-space: nowrap;
+    padding: 8px 0;
 }
