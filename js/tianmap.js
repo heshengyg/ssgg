@@ -1,7 +1,10 @@
-// tianmap.js - 增加自动定位按钮，定位后放大到最大比例
+// tianmap.js - 增强版：修复直辖市填充、增加调试日志
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
+
+// 直辖市列表
+const municipalities = ['北京市', '天津市', '上海市', '重庆市'];
 
 function initMap() {
     if (!map) {
@@ -42,23 +45,20 @@ function fillAddressToForm(formId, province, city, district, detail) {
     const distSelect = document.getElementById(prefix + 'District');
     const detailInput = document.querySelector(`#${formId}Form input[name="detailAddress"]`);
 
-    console.log('填充地址：', province, city, district, detail);
-
-    // 直辖市列表
-    const municipalities = ['北京市', '天津市', '上海市', '重庆市'];
+    console.log('填充地址：', { province, city, district, detail });
 
     // 增强匹配函数
-    function matchText(selectEl, text) {
+    function matchText(selectEl, text, level) {
         if (!selectEl) return false;
         if (!text) return false;
 
-        console.log(`尝试匹配 "${text}" 在下拉框 ${selectEl.id} 中`);
+        console.log(`[${level}] 尝试匹配 "${text}" 在下拉框 ${selectEl.id} 中`);
 
         // 1. 精确匹配
         for (let opt of selectEl.options) {
             if (opt.text === text) {
                 selectEl.value = opt.value;
-                console.log(`精确匹配成功：${text} -> ${opt.value}`);
+                console.log(`[${level}] 精确匹配成功：${text} -> ${opt.value}`);
                 return true;
             }
         }
@@ -68,87 +68,94 @@ function fillAddressToForm(formId, province, city, district, detail) {
         for (let opt of selectEl.options) {
             if (opt.text.replace(/[省市县区]$/, '') === clean) {
                 selectEl.value = opt.value;
-                console.log(`去除后缀匹配成功：${text} -> ${opt.value}`);
+                console.log(`[${level}] 去除后缀匹配成功：${text} -> ${opt.value}`);
                 return true;
             }
         }
 
-        // 3. 包含匹配
+        // 3. 包含匹配（例如 text "北京" 匹配 "北京市"）
         for (let opt of selectEl.options) {
             if (opt.text.includes(text) || text.includes(opt.text)) {
                 selectEl.value = opt.value;
-                console.log(`包含匹配成功：${text} -> ${opt.value}`);
+                console.log(`[${level}] 包含匹配成功：${text} -> ${opt.value}`);
                 return true;
             }
         }
 
-        console.log(`未找到匹配项：${text}`);
+        console.log(`[${level}] 未找到匹配项：${text}`);
         return false;
     }
 
-    // 设置省份
+    // 1. 匹配省份
     if (provSelect) {
-        matchText(provSelect, province);
-        provSelect.dispatchEvent(new Event('change'));
+        const provMatched = matchText(provSelect, province, '省份');
+        if (provMatched) {
+            provSelect.dispatchEvent(new Event('change'));
+        } else {
+            console.warn('省份匹配失败，无法继续');
+            // 即使省份匹配失败，仍然尝试触发 change，或许有默认选项
+            provSelect.dispatchEvent(new Event('change'));
+        }
     }
 
-    // 等待城市下拉加载
+    // 2. 处理城市和区县（根据是否为直辖市分支）
+    const isMunicipality = municipalities.includes(province);
+
     const waitForCity = (callback) => {
         if (citySelect && citySelect.options.length > 1) {
-            console.log('城市下拉已加载，开始处理城市');
-            // 判断是否为直辖市
-            if (municipalities.includes(province)) {
-                // 直辖市：尝试选择“市辖区”
-                let matched = false;
-                for (let opt of citySelect.options) {
-                    if (opt.text === '市辖区' || opt.text.includes('市辖区')) {
-                        citySelect.value = opt.value;
-                        console.log('直辖市自动选择：市辖区');
-                        matched = true;
-                        break;
-                    }
-                }
-                if (!matched) {
-                    console.warn('未找到“市辖区”选项，城市留空');
-                    citySelect.value = '';
-                }
-                citySelect.dispatchEvent(new Event('change'));
-                // 直接进入区县处理
-                setTimeout(() => {
-                    if (distSelect && distSelect.options.length > 1) {
-                        matchText(distSelect, district);
-                    } else {
-                        setTimeout(waitForDistrict, 50);
-                    }
-                }, 200);
-            } else {
-                // 非直辖市：正常匹配城市
-                callback();
-            }
+            console.log('城市下拉已加载，选项数：', citySelect.options.length);
+            callback();
         } else {
-            setTimeout(() => waitForCity(callback), 50);
+            console.log('等待城市下拉加载...');
+            setTimeout(() => waitForCity(callback), 100);
         }
     };
 
-    // 区县处理（非直辖市用）
     const waitForDistrict = () => {
         if (distSelect && distSelect.options.length > 1) {
-            matchText(distSelect, district);
+            console.log('区县下拉已加载，选项数：', distSelect.options.length);
+            matchText(distSelect, district, '区县');
         } else {
-            setTimeout(waitForDistrict, 50);
+            console.log('等待区县下拉加载...');
+            setTimeout(waitForDistrict, 100);
         }
     };
 
-    waitForCity(() => {
-        // 非直辖市匹配城市
-        matchText(citySelect, city);
-        citySelect.dispatchEvent(new Event('change'));
-        // 然后匹配区县
-        setTimeout(waitForDistrict, 200);
-    });
+    if (isMunicipality) {
+        // 直辖市：不匹配城市，直接尝试选择“市辖区”或留空，然后匹配区县
+        console.log('直辖市，跳过城市匹配');
+        if (citySelect) {
+            // 尝试选择“市辖区”
+            let found = false;
+            for (let opt of citySelect.options) {
+                if (opt.text === '市辖区' || opt.text.includes('市辖区')) {
+                    citySelect.value = opt.value;
+                    console.log('直辖市自动选择城市：', opt.text);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                console.warn('未找到“市辖区”选项，城市留空');
+                citySelect.value = '';
+            }
+            citySelect.dispatchEvent(new Event('change'));
+        }
+        // 等待区县加载
+        setTimeout(waitForDistrict, 300);
+    } else {
+        // 非直辖市：先匹配城市，再匹配区县
+        waitForCity(() => {
+            matchText(citySelect, city, '城市');
+            citySelect.dispatchEvent(new Event('change'));
+            setTimeout(waitForDistrict, 300);
+        });
+    }
 
+    // 填充详细地址
     if (detailInput) detailInput.value = detail;
 }
+
 function bindSearch() {
     const searchBtn = document.getElementById('searchBtn');
     const searchInput = document.getElementById('searchAddress');
@@ -192,9 +199,9 @@ function bindSearch() {
 
             const point = new T.LngLat(parseFloat(lon), parseFloat(lat));
             map.panTo(point);
-            map.setZoom(18); // 放大到最大比例
+            map.setZoom(18);
 
-            // 填充地址
+            // 填充地址信息
             let province = '', city = '', district = '', detail = '';
             if (result.addressComponent) {
                 province = result.addressComponent.province || '';
@@ -233,9 +240,8 @@ function bindLocate() {
                 const lat = position.coords.latitude;
                 const point = new T.LngLat(lon, lat);
                 map.panTo(point);
-                map.setZoom(18); // 最大比例
+                map.setZoom(18);
 
-                // 逆地理编码填充地址
                 const geocoder = new T.Geocoder();
                 geocoder.getLocation(point, function(result) {
                     if (result.getStatus && result.getStatus() === 0) {
@@ -243,7 +249,6 @@ function bindLocate() {
                         const detail = result.getAddress() || '';
                         fillAddressToForm(currentFormId, comp.province || '', comp.city || '', comp.district || '', detail);
                     } else {
-                        // 如果逆地理编码失败，至少填充经纬度
                         fillAddressToForm(currentFormId, '', '', '', `经度:${lon},纬度:${lat}`);
                     }
                 });
@@ -266,7 +271,7 @@ function openMapPicker(formId) {
     setTimeout(() => {
         initMap();
         bindSearch();
-        bindLocate(); // 绑定定位按钮
+        bindLocate();
         if (map) map.panTo(new T.LngLat(116.397428, 39.90923));
     }, 300);
 }
