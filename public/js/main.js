@@ -119,8 +119,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === modal) modal.style.display = 'none';
     });
 
-    // ---------- Cloudflare Workers 表单提交 ----------
-    const WORKER_URL = 'https://ssgg.15512469.workers.dev/'; // 您的 Worker URL
+// 改为相对路径。因为我们的 Functions 文件是 submit.js，它对应的路由就是 /submit
+const API_ENDPOINT = '/submit';
 
     async function submitForm(formId, type) {
         const form = document.getElementById(formId);
@@ -164,13 +164,17 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.textContent = '提交中...';
             submitBtn.disabled = true;
 
-            const response = await fetch(WORKER_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
+            // 原来是
+// const response = await fetch(WORKER_URL, { ... });
+
+// 改为
+const response = await fetch(API_ENDPOINT, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload)
+});
 
             const result = await response.json();
             if (result.code === 0) {
