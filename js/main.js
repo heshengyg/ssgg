@@ -119,5 +119,86 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === modal) modal.style.display = 'none';
     });
 
-    // ❌ 原表单提交代码已全部删除，不再处理提交
+    // ---------- Cloudflare Workers 表单提交 ----------
+    const WORKER_URL = 'https://ssgg.15512469.workers.dev/'; // 您的 Worker URL
+
+    async function submitForm(formId, type) {
+        const form = document.getElementById(formId);
+        if (!form) return;
+
+        // 获取表单数据
+        const shopName = form.querySelector('input[name="shopName"]').value.trim();
+        const contactPhone = form.querySelector('input[name="contactPhone"]').value.trim();
+        const contactName = form.querySelector('input[name="contactName"]').value.trim();
+        const detailAddress = form.querySelector('input[name="detailAddress"]').value.trim();
+
+        const provSelect = form.querySelector('select[name="province"]');
+        const citySelect = form.querySelector('select[name="city"]');
+        const distSelect = form.querySelector('select[name="district"]');
+        const province = provSelect.options[provSelect.selectedIndex]?.text || '';
+        const city = citySelect.options[citySelect.selectedIndex]?.text || '';
+        const district = distSelect.options[distSelect.selectedIndex]?.text || '';
+
+        // 验证必填字段
+        if (!shopName || !contactName || !contactPhone || !province || !city || !district || !detailAddress) {
+            alert('请填写所有必填字段');
+            return false;
+        }
+
+        const payload = {
+            type: type,
+            shopName: shopName,
+            contactName: contactName,
+            contactPhone: contactPhone,
+            province: province,
+            city: city,
+            district: district,
+            detailAddress: detailAddress,
+            timestamp: new Date().toISOString()
+        };
+
+        try {
+            // 显示提交中状态
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '提交中...';
+            submitBtn.disabled = true;
+
+            const response = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (result.code === 0) {
+                alert(`${type}入驻申请提交成功！`);
+                form.reset(); // 清空表单
+            } else {
+                throw new Error(result.message || '提交失败');
+            }
+        } catch (error) {
+            console.error('提交失败：', error);
+            alert('提交失败，请稍后重试或联系管理员');
+        } finally {
+            // 恢复按钮状态
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.textContent = '提交入驻申请';
+            submitBtn.disabled = false;
+        }
+    }
+
+    // 绑定供应商表单提交
+    document.getElementById('supplierForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitForm('supplierForm', '供应商');
+    });
+
+    // 绑定商家表单提交
+    document.getElementById('merchantForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitForm('merchantForm', '商家');
+    });
 });
