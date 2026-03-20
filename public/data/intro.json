@@ -6,7 +6,7 @@
     {
         "type": "image",
         "src": "images/intro1.jpg",
-        "alt": "社区服务场景",
+        "alt": "社区服务场景"
     },
     {
         "type": "text",
@@ -15,6 +15,6 @@
     {
         "type": "image",
         "src": "images/intro2.png",
-        "alt": "合作伙伴",
+        "alt": "合作伙伴"
     }
 ]
