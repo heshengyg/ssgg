@@ -1,4 +1,4 @@
-// tianmap.js - 最终修复版（保留省市填充，增强区县匹配）
+// tianmap.js - 最终稳定版（保留省市填充逻辑，增强区县匹配）
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
@@ -45,7 +45,7 @@ function onMapClick(e) {
                 const city = comp.city || '';
                 let district = comp.district || comp.County || comp.county || comp.area || '';
 
-                // 直辖市补全（如果 province 为空，从 city 或 detail 推断）
+                // 直辖市补全：如果 province 为空，从 city 或 detail 推断
                 if (!province) {
                     if (city.includes('北京') || city.includes('天津') || city.includes('上海') || city.includes('重庆')) {
                         province = city;
@@ -76,7 +76,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
 
     console.log('填充地址：', { province, city, district, detail });
 
-    // 增强匹配函数（保留精确、后缀、包含匹配）
+    // 增强匹配函数（支持精确、去除后缀、包含匹配）
     function matchText(selectEl, text, level) {
         if (!selectEl) return false;
         if (!text) return false;
@@ -115,7 +115,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
         return false;
     }
 
-    // ----- 1. 匹配省份（与原稳定版一致）-----
+    // ----- 1. 匹配省份（恢复稳定版逻辑）-----
     let provMatched = false;
     if (provSelect && province) {
         provMatched = matchText(provSelect, province, '省份');
@@ -139,7 +139,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
         }
     }
 
-    // ----- 2. 处理城市和区县（与原稳定版一致，仅增强区县匹配）-----
+    // ----- 2. 处理城市和区县（保留原逻辑，区县匹配增强）-----
     const isMunicipality = municipalities.some(m => province.includes(m) || m.includes(province));
 
     const waitForCity = (callback) => {
@@ -197,7 +197,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
         // 等待区县加载并匹配
         setTimeout(waitForDistrict, 300);
     } else {
-        // 非直辖市：先匹配城市，再匹配区县（与原版一致）
+        // 非直辖市：先匹配城市，再匹配区县（与原稳定版一致）
         waitForCity(() => {
             if (city) {
                 matchText(citySelect, city, '城市');
@@ -213,7 +213,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
     }
 }
 
-// ---------- 以下函数保持不变 ----------
+// ---------- 以下函数保持不变（搜索、定位、打开地图）----------
 function bindSearch() {
     const searchBtn = document.getElementById('searchBtn');
     const searchInput = document.getElementById('searchAddress');
