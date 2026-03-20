@@ -302,7 +302,6 @@ function createQrcodeModal() {
         if (e.target === modalDiv) modalDiv.style.display = 'none';
     });
 }
-
 // 绑定二维码点击事件
 function bindQrcodeClick() {
     const qrcodeImgs = document.querySelectorAll('.qrcode-img');
