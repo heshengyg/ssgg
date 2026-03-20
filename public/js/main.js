@@ -247,29 +247,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ---------- 二维码点击放大和保存 ----------
-    function createQrcodeModal() {
-        if (document.getElementById('qrcodeModal')) return;
-        const modalDiv = document.createElement('div');
-        modalDiv.id = 'qrcodeModal';
-        modalDiv.className = 'qrcode-modal';
-        modalDiv.innerHTML = `
-            <span class="qrcode-modal-close">&times;</span>
-            <div class="qrcode-modal-content">
-                <img id="qrcodeModalImg" src="" alt="二维码">
-            </div>
-            <div class="download-tip">长按图片即可保存到手机</div>
-        `;
-        document.body.appendChild(modalDiv);
+function createQrcodeModal() {
+    if (document.getElementById('qrcodeModal')) return;
+    const modalDiv = document.createElement('div');
+    modalDiv.id = 'qrcodeModal';
+    modalDiv.className = 'qrcode-modal';
+    modalDiv.innerHTML = `
+        <span class="qrcode-modal-close">&times;</span>
+        <div class="qrcode-modal-content">
+            <img id="qrcodeModalImg" src="" alt="二维码">
+        </div>
+        <div class="download-tip">长按图片即可保存到手机</div>
+    `;
+    document.body.appendChild(modalDiv);
+    modalDiv.style.display = 'none'; // 强制初始隐藏
 
-        const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
-        closeBtn.addEventListener('click', () => {
-            modalDiv.style.display = 'none';
-        });
-        modalDiv.addEventListener('click', (e) => {
-            if (e.target === modalDiv) modalDiv.style.display = 'none';
-        });
-    }
-
+    // 关闭模态框
+    const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
+    closeBtn.addEventListener('click', () => {
+        modalDiv.style.display = 'none';
+    });
+    modalDiv.addEventListener('click', (e) => {
+        if (e.target === modalDiv) modalDiv.style.display = 'none';
+    });
+}
     function bindQrcodeClick() {
         const qrcodeImgs = document.querySelectorAll('.qrcode-img');
         if (qrcodeImgs.length === 0) return;
