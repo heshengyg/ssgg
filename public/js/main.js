@@ -35,23 +35,16 @@ fetch('data/intro.json')
                 const img = document.createElement('img');
                 img.src = block.src;
                 img.alt = block.alt || '';
-                // 可以设置样式，或者添加类名
-                if (block.style) {
-                    img.style.cssText = block.style;
-                } else {
-                    img.style.maxWidth = '100%';
-                    img.style.margin = '10px 0';
-                }
+                img.style.maxWidth = '100%';
+                img.style.margin = '10px 0';
                 introContentDiv.appendChild(img);
             }
-            // 可以扩展其他类型，如标题等
         });
     })
     .catch(err => {
         console.error('平台简介加载失败：', err);
         document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
     });
-
 // ---------- 加载平台要闻（支持图文混排）----------
 fetch('data/news.json')
     .then(res => res.json())
