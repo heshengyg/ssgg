@@ -275,3 +275,54 @@ const response = await fetch(API_ENDPOINT, {
         submitForm('merchantForm', '商家');
     });
 });
+
+// ---------- 二维码点击放大和保存 ----------
+// 创建模态框元素（如果尚未存在）
+function createQrcodeModal() {
+    if (document.getElementById('qrcodeModal')) return;
+
+    const modalDiv = document.createElement('div');
+    modalDiv.id = 'qrcodeModal';
+    modalDiv.className = 'qrcode-modal';
+    modalDiv.innerHTML = `
+        <span class="qrcode-modal-close">&times;</span>
+        <div class="qrcode-modal-content">
+            <img id="qrcodeModalImg" src="" alt="二维码">
+        </div>
+        <div class="download-tip">长按图片即可保存到手机</div>
+    `;
+    document.body.appendChild(modalDiv);
+
+    // 关闭模态框
+    const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
+    closeBtn.addEventListener('click', () => {
+        modalDiv.style.display = 'none';
+    });
+    modalDiv.addEventListener('click', (e) => {
+        if (e.target === modalDiv) modalDiv.style.display = 'none';
+    });
+}
+
+// 绑定二维码点击事件
+function bindQrcodeClick() {
+    const qrcodeImgs = document.querySelectorAll('.qrcode-img');
+    if (qrcodeImgs.length === 0) return;
+
+    createQrcodeModal();
+
+    qrcodeImgs.forEach(img => {
+        img.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const modalImg = document.getElementById('qrcodeModalImg');
+            modalImg.src = img.src;
+            modalImg.alt = img.alt;
+            document.getElementById('qrcodeModal').style.display = 'flex';
+        });
+    });
+}
+
+// 在页面加载完成后执行
+document.addEventListener('DOMContentLoaded', function() {
+    // ... 其他已有代码 ...
+    bindQrcodeClick();
+});
