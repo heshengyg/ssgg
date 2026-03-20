@@ -516,3 +516,9 @@ button[type="submit"]:hover {
     font-size: 14px;
     text-align: center;
 }
+
+/* 联系方式区域行距 */
+#contact p {
+    margin-bottom: 12px;   /* 增加段落间距 */
+    line-height: 1.8;      /* 增加行高 */
+}
