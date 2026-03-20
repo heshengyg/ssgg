@@ -67,7 +67,7 @@ fetch('data/news.json')
             // 标题和时间（始终可见）
             const headerDiv = document.createElement('div');
             headerDiv.className = 'news-header';
-            headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📅 ${item.time}</div>`;
+            headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
 
             // 正文容器（初始隐藏）
             const contentDiv = document.createElement('div');
