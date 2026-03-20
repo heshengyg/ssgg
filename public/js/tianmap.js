@@ -1,8 +1,9 @@
-// tianmap.js - 最终稳定版（修复标记错误，增强填充）
+// tianmap.js - 最终修复版（修复直辖市判断，增加区县提取）
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
 
+// 直辖市列表
 const municipalities = ['北京市', '天津市', '上海市', '重庆市'];
 
 function initMap() {
@@ -43,6 +44,7 @@ function onMapClick(e) {
                 const city = comp.city || '';
                 let district = comp.district || comp.County || comp.county || comp.area || '';
 
+                // 直辖市补全：如果 province 为空，尝试从 city 或 detail 推断
                 if (!province) {
                     if (city.includes('北京') || city.includes('天津') || city.includes('上海') || city.includes('重庆')) {
                         province = city;
@@ -50,6 +52,19 @@ function onMapClick(e) {
                     else if (detail.includes('北京市')) province = '北京市';
                     else if (detail.includes('天津市')) province = '天津市';
                     else if (detail.includes('上海市')) province = '上海市';
+                }
+
+                // 如果 district 为空，尝试从 detail 中提取区县（简单提取最后一个区/县名）
+                if (!district && detail) {
+                    const match = detail.match(/([^市]+[市区县])/g);
+                    if (match && match.length > 0) {
+                        // 取最后一个匹配项，通常是区县
+                        const last = match[match.length - 1];
+                        if (last.includes('区') || last.includes('县')) {
+                            district = last;
+                            console.log('从详细地址提取区县：', district);
+                        }
+                    }
                 }
 
                 console.log('最终要填充的 province:', province, 'city:', city, 'district:', district);
@@ -112,7 +127,8 @@ function fillAddressToForm(formId, province, city, district, detail) {
     let provMatched = false;
     if (provSelect && province) {
         provMatched = matchText(provSelect, province, '省份');
-        if (!provMatched && municipalities.some(m => province.includes(m) || m.includes(province))) {
+        // 如果省份是直辖市且未匹配成功，尝试模糊匹配
+        if (!provMatched && municipalities.includes(province)) {
             const shortName = province.replace(/[市]$/, '');
             for (let opt of provSelect.options) {
                 if (opt.text.includes(shortName)) {
@@ -126,7 +142,8 @@ function fillAddressToForm(formId, province, city, district, detail) {
     }
     if (provSelect) provSelect.dispatchEvent(new Event('change'));
 
-    const isMunicipality = municipalities.some(m => province.includes(m) || m.includes(province));
+    // 判断是否为直辖市（只有 province 非空且是直辖市时才为 true）
+    const isMunicipality = province && municipalities.includes(province);
 
     const waitForCity = (callback) => {
         if (citySelect && citySelect.options.length > 1) {
@@ -175,6 +192,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
         }
         setTimeout(waitForDistrict, 300);
     } else {
+        // 非直辖市：先匹配城市，再匹配区县
         waitForCity(() => {
             if (city) matchText(citySelect, city, '城市');
             citySelect.dispatchEvent(new Event('change'));
@@ -182,6 +200,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
         });
     }
 
+    // 填充详细地址
     if (detailInput) detailInput.value = detail;
 }
 
@@ -229,7 +248,7 @@ function bindSearch() {
             const point = new T.LngLat(parseFloat(lon), parseFloat(lat));
             map.panTo(point);
             map.setZoom(18);
-            // 移除可能导致错误的标记操作
+            // 移除标记操作以避免错误
             // map.clearOverlays();
             // const marker = new T.Marker(point);
             // map.addOverlay(marker);
@@ -279,7 +298,9 @@ function bindLocate() {
                         if (comp) {
                             let province = comp.province || '';
                             const city = comp.city || '';
-                            const district = comp.district || comp.County || '';
+                            let district = comp.district || comp.County || '';
+
+                            // 同上的补全逻辑
                             if (!province) {
                                 if (city.includes('北京') || city.includes('天津') || city.includes('上海') || city.includes('重庆')) {
                                     province = city;
@@ -287,6 +308,12 @@ function bindLocate() {
                                 else if (detail.includes('北京市')) province = '北京市';
                                 else if (detail.includes('天津市')) province = '天津市';
                                 else if (detail.includes('上海市')) province = '上海市';
+                            }
+                            if (!district && detail) {
+                                const match = detail.match(/([^市]+[市区县])/g);
+                                if (match && match.length > 0) {
+                                    district = match[match.length - 1];
+                                }
                             }
                             fillAddressToForm(currentFormId, province, city, district, detail);
                         } else {
