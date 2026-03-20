@@ -1,9 +1,13 @@
-// tianmap.js - 稳定版（搜索只定位，点击地图填充）
+// tianmap.js - 最终稳定版（自动填充省份，搜索放大到最大）
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
 
+// 直辖市列表
 const municipalities = ['北京市', '天津市', '上海市', '重庆市'];
+
+// 常见省份列表（用于从detail中匹配）
+const provinces = ['北京市', '天津市', '上海市', '重庆市', '河北省', '山西省', '辽宁省', '吉林省', '黑龙江省', '江苏省', '浙江省', '安徽省', '福建省', '江西省', '山东省', '河南省', '湖北省', '湖南省', '广东省', '海南省', '四川省', '贵州省', '云南省', '陕西省', '甘肃省', '青海省', '台湾省', '内蒙古自治区', '广西壮族自治区', '西藏自治区', '宁夏回族自治区', '新疆维吾尔自治区', '香港特别行政区', '澳门特别行政区'];
 
 function initMap() {
     if (!map) {
@@ -43,23 +47,36 @@ function onMapClick(e) {
                 const city = comp.city || '';
                 let district = comp.district || comp.County || comp.county || comp.area || '';
 
-                // 补全省份（如果为空）
+                // ***** 智能补全省份 *****
                 if (!province) {
-                    if (detail.includes('重庆市')) province = '重庆市';
-                    else if (detail.includes('北京市')) province = '北京市';
-                    else if (detail.includes('天津市')) province = '天津市';
-                    else if (detail.includes('上海市')) province = '上海市';
+                    // 1. 从 detail 开头匹配直辖市
+                    if (detail.startsWith('重庆市')) province = '重庆市';
+                    else if (detail.startsWith('北京市')) province = '北京市';
+                    else if (detail.startsWith('天津市')) province = '天津市';
+                    else if (detail.startsWith('上海市')) province = '上海市';
                     else {
-                        const firstSpace = detail.indexOf(' ');
-                        if (firstSpace > 0) province = detail.substring(0, firstSpace);
+                        // 2. 遍历常见省份列表，看 detail 开头是否包含
+                        for (let p of provinces) {
+                            if (detail.startsWith(p)) {
+                                province = p;
+                                break;
+                            }
+                        }
+                        // 3. 如果还没找到，取 detail 第一个空格前的部分作为备用
+                        if (!province) {
+                            const firstSpace = detail.indexOf(' ');
+                            if (firstSpace > 0) province = detail.substring(0, firstSpace);
+                        }
                     }
+                    console.log('从 detail 提取 province:', province);
                 }
 
-                // 补全区县（如果为空）
+                // ***** 智能提取区县 *****
                 if (!district && detail) {
                     const match = detail.match(/([^市]+[区县]|自治县)/g);
                     if (match && match.length > 0) {
                         district = match[match.length - 1];
+                        console.log('从 detail 提取 district:', district);
                     }
                 }
 
@@ -263,10 +280,8 @@ function bindSearch() {
 
             const point = new T.LngLat(parseFloat(lon), parseFloat(lat));
             map.panTo(point);
-            map.setZoom(14); // 缩放到合适级别
+            map.setZoom(18); // 最大比例
 
-            // 不移除旧标记，也不添加新标记，让用户手动点击地图填充
-            // 可添加提示
             alert('请在地图上点击您要选择的位置');
         });
     });
@@ -296,7 +311,7 @@ function bindLocate() {
                 const lat = position.coords.latitude;
                 const point = new T.LngLat(lon, lat);
                 map.panTo(point);
-                map.setZoom(16);
+                map.setZoom(18);
 
                 const geocoder = new T.Geocoder();
                 geocoder.getLocation(point, function(result) {
@@ -313,10 +328,18 @@ function bindLocate() {
                             const city = comp.city || '';
                             let district = comp.district || comp.County || '';
                             if (!province) {
-                                if (detail.includes('重庆市')) province = '重庆市';
-                                else if (detail.includes('北京市')) province = '北京市';
-                                else if (detail.includes('天津市')) province = '天津市';
-                                else if (detail.includes('上海市')) province = '上海市';
+                                if (detail.startsWith('重庆市')) province = '重庆市';
+                                else if (detail.startsWith('北京市')) province = '北京市';
+                                else if (detail.startsWith('天津市')) province = '天津市';
+                                else if (detail.startsWith('上海市')) province = '上海市';
+                                else {
+                                    for (let p of provinces) {
+                                        if (detail.startsWith(p)) {
+                                            province = p;
+                                            break;
+                                        }
+                                    }
+                                }
                             }
                             if (!district && detail) {
                                 const match = detail.match(/([^市]+[区县]|自治县)/g);
