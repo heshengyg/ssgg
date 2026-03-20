@@ -16,6 +16,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+// 加载平台简介内容
+fetch('data/intro.json')
+    .then(res => {
+        if (!res.ok) throw new Error('网络响应失败');
+        return res.json();
+    })
+    .then(contentBlocks => {
+        const introContentDiv = document.getElementById('intro-content');
+        if (!introContentDiv) return;
+        introContentDiv.innerHTML = ''; // 清空
+        contentBlocks.forEach(block => {
+            if (block.type === 'text') {
+                const p = document.createElement('p');
+                p.textContent = block.content;
+                introContentDiv.appendChild(p);
+            } else if (block.type === 'image') {
+                const img = document.createElement('img');
+                img.src = block.src;
+                img.alt = block.alt || '';
+                // 可以设置样式，或者添加类名
+                if (block.style) {
+                    img.style.cssText = block.style;
+                } else {
+                    img.style.maxWidth = '100%';
+                    img.style.margin = '10px 0';
+                }
+                introContentDiv.appendChild(img);
+            }
+            // 可以扩展其他类型，如标题等
+        });
+    })
+    .catch(err => {
+        console.error('平台简介加载失败：', err);
+        document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
+    });
+
     // 加载平台要闻
     fetch('data/news.json')
         .then(res => res.json())
