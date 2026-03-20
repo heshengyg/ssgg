@@ -1,10 +1,9 @@
-// tianmap.js - 最终完善版（修正直辖市县的城市级选择）
+// tianmap.js - 最终版（修复setTitle错误，完善直辖市县处理）
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
 let currentMarkers = [];
 
-// 直辖市列表
 const municipalities = ['北京市', '天津市', '上海市', '重庆市'];
 
 function initMap() {
@@ -52,7 +51,6 @@ function onMapClick(e) {
                 const city = comp.city || '';
                 let district = comp.district || comp.County || comp.county || comp.area || '';
 
-                // 直辖市补全
                 if (!province) {
                     if (city.includes('北京') || city.includes('天津') || city.includes('上海') || city.includes('重庆')) {
                         province = city;
@@ -62,7 +60,6 @@ function onMapClick(e) {
                     else if (detail.includes('上海市')) province = '上海市';
                 }
 
-                // 从详细地址提取区县（备用）
                 if (!district && detail) {
                     const match = detail.match(/([^市]+[市区县])/g);
                     if (match && match.length > 0) {
@@ -177,7 +174,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
         const isCounty = district.includes('县');
         if (citySelect) {
             if (!isCounty) {
-                // 区：尝试选择“市辖区”
+                // 区：优先选择“市辖区”
                 let found = false;
                 for (let opt of citySelect.options) {
                     if (opt.text === '市辖区' || opt.text.includes('市辖区')) {
@@ -188,17 +185,17 @@ function fillAddressToForm(formId, province, city, district, detail) {
                     }
                 }
                 if (!found) {
-                    // 如果没有“市辖区”，则选择第一个非空选项（比如可能叫“重庆城区”等）
-                    console.warn('未找到“市辖区”选项，尝试选择第一个选项');
-                    if (citySelect.options.length > 1) {
-                        citySelect.value = citySelect.options[1].value;
-                    } else {
-                        citySelect.value = '';
+                    // 若没有市辖区，则选择第一个非空选项
+                    for (let opt of citySelect.options) {
+                        if (opt.value !== '') {
+                            citySelect.value = opt.value;
+                            console.log('选择的城市：', opt.text);
+                            break;
+                        }
                     }
                 }
             } else {
-                // 县：尝试选择文本包含“县”的选项
-                console.log('直辖市县，尝试选择包含“县”的城市选项');
+                // 县：选择文本包含“县”的选项
                 let found = false;
                 for (let opt of citySelect.options) {
                     if (opt.text.includes('县')) {
@@ -209,8 +206,13 @@ function fillAddressToForm(formId, province, city, district, detail) {
                     }
                 }
                 if (!found) {
-                    console.warn('未找到包含“县”的城市选项，城市留空');
-                    citySelect.value = '';
+                    for (let opt of citySelect.options) {
+                        if (opt.value !== '') {
+                            citySelect.value = opt.value;
+                            console.log('选择的城市：', opt.text);
+                            break;
+                        }
+                    }
                 }
             }
             citySelect.dispatchEvent(new Event('change'));
@@ -293,7 +295,6 @@ function bindSearch() {
 
                 const lnglat = new T.LngLat(parseFloat(lon), parseFloat(lat));
                 const marker = new T.Marker(lnglat);
-                marker.setTitle(poi.name || poi.formatted_address || '位置');
 
                 marker.addEventListener('click', function() {
                     let province = '', city = '', district = '', detail = '';
@@ -372,7 +373,7 @@ function bindLocate() {
                 clearMarkers();
 
                 const marker = new T.Marker(point);
-                marker.setTitle('当前位置');
+
                 marker.addEventListener('click', function() {
                     const geocoder = new T.Geocoder();
                     geocoder.getLocation(point, function(result) {
@@ -412,6 +413,7 @@ function bindLocate() {
                     });
                     document.getElementById('mapModal').style.display = 'none';
                 });
+
                 map.addOverlay(marker);
                 currentMarkers.push(marker);
             },
