@@ -1,4 +1,4 @@
-// tianmap.js - 稳定版（仅修复直辖市县的城市选择）
+// tianmap.js - 稳定版（搜索只定位，点击地图填充）
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
@@ -50,7 +50,6 @@ function onMapClick(e) {
                     else if (detail.includes('天津市')) province = '天津市';
                     else if (detail.includes('上海市')) province = '上海市';
                     else {
-                        // 简单取第一个空格前的部分作为省份（备用）
                         const firstSpace = detail.indexOf(' ');
                         if (firstSpace > 0) province = detail.substring(0, firstSpace);
                     }
@@ -177,7 +176,6 @@ function fillAddressToForm(formId, province, city, district, detail) {
                     }
                 }
                 if (!found) {
-                    // 如果没有，选择第一个有效选项
                     for (let opt of citySelect.options) {
                         if (opt.value !== '') {
                             citySelect.value = opt.value;
@@ -267,9 +265,9 @@ function bindSearch() {
             map.panTo(point);
             map.setZoom(14); // 缩放到合适级别
 
-            // 模拟点击该点，触发逆地理编码填充
-            const fakeEvent = { lnglat: point };
-            onMapClick(fakeEvent);
+            // 不移除旧标记，也不添加新标记，让用户手动点击地图填充
+            // 可添加提示
+            alert('请在地图上点击您要选择的位置');
         });
     });
 }
