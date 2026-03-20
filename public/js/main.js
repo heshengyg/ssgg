@@ -52,35 +52,68 @@ fetch('data/intro.json')
         document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
     });
 
-    // 加载平台要闻
-    fetch('data/news.json')
-        .then(res => res.json())
-        .then(newsArray => {
-            const newsListDiv = document.getElementById('news-list');
-            if (!newsListDiv) return;
-            newsListDiv.innerHTML = '';
-            newsArray.forEach(item => {
-                const article = document.createElement('article');
-                article.className = 'news-item';
-                article.innerHTML = `
-                    <div class="news-header">
-                        <h3>${item.title}</h3>
-                        <div class="news-time">📅 ${item.time}</div>
-                    </div>
-                    <div class="news-content">${item.content}</div>
-                `;
-                const header = article.querySelector('.news-header');
-                const content = article.querySelector('.news-content');
-                header.addEventListener('click', () => {
-                    content.style.display = content.style.display === 'none' ? 'block' : 'none';
+// ---------- 加载平台要闻（支持图文混排）----------
+fetch('data/news.json')
+    .then(res => res.json())
+    .then(newsArray => {
+        const newsListDiv = document.getElementById('news-list');
+        if (!newsListDiv) return;
+        newsListDiv.innerHTML = ''; // 清空
+
+        newsArray.forEach(item => {
+            const article = document.createElement('article');
+            article.className = 'news-item';
+
+            // 标题和时间（始终可见）
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'news-header';
+            headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📅 ${item.time}</div>`;
+
+            // 正文容器（初始隐藏）
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'news-content';
+            contentDiv.style.display = 'none'; // 默认隐藏
+
+            // 根据 content 数组生成正文内容
+            if (Array.isArray(item.content)) {
+                item.content.forEach(block => {
+                    if (block.type === 'text') {
+                        const p = document.createElement('p');
+                        p.textContent = block.value;
+                        contentDiv.appendChild(p);
+                    } else if (block.type === 'image') {
+                        const img = document.createElement('img');
+                        img.src = block.src;
+                        img.alt = block.alt || '';
+                        // 可以添加样式类或内联样式
+                        img.style.maxWidth = '100%';
+                        img.style.margin = '10px 0';
+                        contentDiv.appendChild(img);
+                    }
                 });
-                newsListDiv.appendChild(article);
+            } else {
+                // 兼容旧格式（如果 content 是纯字符串）
+                const p = document.createElement('p');
+                p.textContent = item.content;
+                contentDiv.appendChild(p);
+            }
+
+            // 组装文章
+            article.appendChild(headerDiv);
+            article.appendChild(contentDiv);
+
+            // 点击标题切换正文显示
+            headerDiv.addEventListener('click', () => {
+                contentDiv.style.display = contentDiv.style.display === 'none' ? 'block' : 'none';
             });
-        })
-        .catch(err => {
-            console.warn('新闻加载失败', err);
-            document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
+
+            newsListDiv.appendChild(article);
         });
+    })
+    .catch(err => {
+        console.warn('新闻加载失败', err);
+        document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
+    });
 
     // 加载省市区数据
     fetch('data/areas_nested.json')
