@@ -1,4 +1,4 @@
-// tianmap.js - 最终优化版（增强区县匹配，去除搜索弹窗）
+// tianmap.js - 最终修复版（保留省市填充，增强区县匹配）
 let map = null;
 let currentFormId = null;
 let isClickBound = false;
@@ -40,11 +40,12 @@ function onMapClick(e) {
             const detail = typeof result.getAddress === 'function' ? result.getAddress() : (result.formatted_address || '');
 
             if (comp) {
+                // 提取省市区（兼容多种字段名）
                 let province = comp.province || '';
                 const city = comp.city || '';
                 let district = comp.district || comp.County || comp.county || comp.area || '';
 
-                // 直辖市补全：如果 province 为空，从 city 或 detail 推断
+                // 直辖市补全（如果 province 为空，从 city 或 detail 推断）
                 if (!province) {
                     if (city.includes('北京') || city.includes('天津') || city.includes('上海') || city.includes('重庆')) {
                         province = city;
@@ -54,7 +55,7 @@ function onMapClick(e) {
                     else if (detail.includes('上海市')) province = '上海市';
                 }
 
-                console.log('最终要填充的 province:', province, 'district:', district);
+                console.log('最终要填充的 province:', province, 'city:', city, 'district:', district);
                 fillAddressToForm(currentFormId, province, city, district, detail);
             } else {
                 alert('无法解析地址，请手动填写');
@@ -75,7 +76,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
 
     console.log('填充地址：', { province, city, district, detail });
 
-    // 增强匹配函数：支持精确、去除后缀、包含匹配
+    // 增强匹配函数（保留精确、后缀、包含匹配）
     function matchText(selectEl, text, level) {
         if (!selectEl) return false;
         if (!text) return false;
@@ -114,11 +115,11 @@ function fillAddressToForm(formId, province, city, district, detail) {
         return false;
     }
 
-    // 1. 匹配省份
+    // ----- 1. 匹配省份（与原稳定版一致）-----
     let provMatched = false;
     if (provSelect && province) {
         provMatched = matchText(provSelect, province, '省份');
-        // 直辖市模糊匹配（如果精确失败）
+        // 如果是直辖市且未精确匹配，尝试更宽松的匹配
         if (!provMatched && municipalities.some(m => province.includes(m) || m.includes(province))) {
             const shortName = province.replace(/[市]$/, '');
             for (let opt of provSelect.options) {
@@ -130,21 +131,17 @@ function fillAddressToForm(formId, province, city, district, detail) {
                 }
             }
         }
+        if (provMatched) {
+            provSelect.dispatchEvent(new Event('change'));
+        } else {
+            console.warn('省份匹配失败，但仍尝试触发 change');
+            provSelect.dispatchEvent(new Event('change'));
+        }
     }
 
-    // 如果省份匹配失败，放弃自动填充（已在主逻辑中处理）
-    if (!provMatched) {
-        console.warn('省份匹配失败，无法继续自动填充');
-        // 即使失败，仍尝试触发 change（可能已有默认选项）
-        if (provSelect) provSelect.dispatchEvent(new Event('change'));
-    } else {
-        provSelect.dispatchEvent(new Event('change'));
-    }
-
-    // 判断是否为直辖市（用于后续处理）
+    // ----- 2. 处理城市和区县（与原稳定版一致，仅增强区县匹配）-----
     const isMunicipality = municipalities.some(m => province.includes(m) || m.includes(province));
 
-    // 等待城市下拉加载的函数
     const waitForCity = (callback) => {
         if (citySelect && citySelect.options.length > 1) {
             console.log('城市下拉已加载，选项数：', citySelect.options.length);
@@ -155,7 +152,6 @@ function fillAddressToForm(formId, province, city, district, detail) {
         }
     };
 
-    // 等待区县下拉加载的函数
     const waitForDistrict = () => {
         if (distSelect && distSelect.options.length > 1) {
             console.log('区县下拉已加载，选项数：', distSelect.options.length);
@@ -201,7 +197,7 @@ function fillAddressToForm(formId, province, city, district, detail) {
         // 等待区县加载并匹配
         setTimeout(waitForDistrict, 300);
     } else {
-        // 非直辖市：先匹配城市，再匹配区县
+        // 非直辖市：先匹配城市，再匹配区县（与原版一致）
         waitForCity(() => {
             if (city) {
                 matchText(citySelect, city, '城市');
@@ -211,18 +207,18 @@ function fillAddressToForm(formId, province, city, district, detail) {
         });
     }
 
-    // 填充详细地址
+    // ----- 3. 填充详细地址 -----
     if (detailInput) {
         detailInput.value = detail;
     }
 }
 
+// ---------- 以下函数保持不变 ----------
 function bindSearch() {
     const searchBtn = document.getElementById('searchBtn');
     const searchInput = document.getElementById('searchAddress');
     if (!searchBtn || !searchInput) return;
 
-    // 移除旧监听（克隆替换）
     searchBtn.replaceWith(searchBtn.cloneNode(true));
     const newSearchBtn = document.getElementById('searchBtn');
 
@@ -266,7 +262,6 @@ function bindSearch() {
             const marker = new T.Marker(point);
             map.addOverlay(marker);
 
-            // 自动触发逆地理编码填充表单（保留原有提示）
             const fakeEvent = { lnglat: point };
             onMapClick(fakeEvent);
         });
