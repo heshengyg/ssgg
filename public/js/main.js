@@ -227,41 +227,52 @@ document.addEventListener('DOMContentLoaded', function() {
         submitForm('merchantForm', '商家');
     });
 
-    // ---------- 二维码功能 ----------
-    function createQrcodeModal() {
-        if (document.getElementById('qrcodeModal')) return;
-        const modalDiv = document.createElement('div');
-        modalDiv.id = 'qrcodeModal';
-        modalDiv.className = 'qrcode-modal';
-        modalDiv.innerHTML = `
-            <span class="qrcode-modal-close">&times;</span>
-            <div class="qrcode-modal-content">
-                <img id="qrcodeModalImg" src="" alt="二维码">
-            </div>
-            <div class="download-tip">长按图片即可保存到手机</div>
-        `;
-        document.body.appendChild(modalDiv);
-        const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
-        closeBtn.addEventListener('click', () => {
-            modalDiv.style.display = 'none';
+// ---------- 二维码点击放大和保存 ----------
+// 创建模态框元素（如果尚未存在）
+function createQrcodeModal() {
+    if (document.getElementById('qrcodeModal')) return;
+
+    const modalDiv = document.createElement('div');
+    modalDiv.id = 'qrcodeModal';
+    modalDiv.className = 'qrcode-modal';
+    modalDiv.innerHTML = `
+        <span class="qrcode-modal-close">&times;</span>
+        <div class="qrcode-modal-content">
+            <img id="qrcodeModalImg" src="" alt="二维码">
+        </div>
+        <div class="download-tip">长按图片即可保存到手机</div>
+    `;
+    document.body.appendChild(modalDiv);
+
+    // 关闭模态框
+    const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
+    closeBtn.addEventListener('click', () => {
+        modalDiv.style.display = 'none';
+    });
+    modalDiv.addEventListener('click', (e) => {
+        if (e.target === modalDiv) modalDiv.style.display = 'none';
+    });
+}
+
+// 绑定二维码点击事件
+function bindQrcodeClick() {
+    const qrcodeImgs = document.querySelectorAll('.qrcode-img');
+    if (qrcodeImgs.length === 0) return;
+
+    createQrcodeModal();
+
+    qrcodeImgs.forEach(img => {
+        img.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const modalImg = document.getElementById('qrcodeModalImg');
+            modalImg.src = img.src;
+            modalImg.alt = img.alt;
+            document.getElementById('qrcodeModal').style.display = 'flex';
         });
-        modalDiv.addEventListener('click', (e) => {
-            if (e.target === modalDiv) modalDiv.style.display = 'none';
-        });
-    }
-    function bindQrcodeClick() {
-        const qrcodeImgs = document.querySelectorAll('.qrcode-img');
-        if (qrcodeImgs.length === 0) return;
-        createQrcodeModal();
-        qrcodeImgs.forEach(img => {
-            img.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const modalImg = document.getElementById('qrcodeModalImg');
-                modalImg.src = img.src;
-                modalImg.alt = img.alt;
-                document.getElementById('qrcodeModal').style.display = 'flex';
-            });
-        });
-    }
-    bindQrcodeClick();
-});
+    });
+}
+
+// 在页面加载完成后执行（注意：不要重复添加 DOMContentLoaded 监听器）
+// 因为前面已经有一个 DOMContentLoaded 监听器了，所以这里直接调用即可，但为了保险，确保 DOM 已加载。
+// 如果前面的监听器已经包含了此函数调用，这里就不需要再调用。但您的代码中前面没有调用，所以在这里调用：
+bindQrcodeClick();
