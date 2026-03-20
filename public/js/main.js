@@ -1,8 +1,8 @@
-// main.js
+// main.js - 完整稳定版
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ main.js loaded');
 
-    // 左侧菜单切换
+    // ---------- 左侧菜单切换 ----------
     const menuItems = document.querySelectorAll('.menu-item');
     const pages = document.querySelectorAll('.page');
 
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 加载平台简介内容
+    // ---------- 加载平台简介 ----------
     fetch('data/intro.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(contentBlocks => {
             const introContentDiv = document.getElementById('intro-content');
             if (!introContentDiv) return;
-            introContentDiv.innerHTML = '';
+            introContentDiv.innerHTML = ''; // 清空
             contentBlocks.forEach(block => {
                 if (block.type === 'text') {
                     const p = document.createElement('p');
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-    // 加载平台要闻（支持图文混排）
+    // ---------- 加载平台要闻（支持图文混排）----------
     fetch('data/news.json')
         .then(res => res.json())
         .then(newsArray => {
@@ -58,14 +58,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 const article = document.createElement('article');
                 article.className = 'news-item';
 
+                // 标题和时间
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'news-header';
-                headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
+                headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📅 ${item.time}</div>`;
 
+                // 正文容器（初始隐藏）
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'news-content';
                 contentDiv.style.display = 'none';
 
+                // 生成正文
                 if (Array.isArray(item.content)) {
                     item.content.forEach(block => {
                         if (block.type === 'text') {
@@ -82,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
                 } else {
+                    // 兼容旧格式
                     const p = document.createElement('p');
                     p.textContent = item.content;
                     contentDiv.appendChild(p);
@@ -89,11 +93,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 article.appendChild(headerDiv);
                 article.appendChild(contentDiv);
-
                 headerDiv.addEventListener('click', () => {
                     contentDiv.style.display = contentDiv.style.display === 'none' ? 'block' : 'none';
                 });
-
                 newsListDiv.appendChild(article);
             });
         })
@@ -102,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
         });
 
-    // 加载省市区数据
+    // ---------- 加载省市区数据 ----------
     fetch('data/areas_nested.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -158,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-    // 地图选点按钮
+    // ---------- 地图选点按钮 ----------
     document.querySelectorAll('.map-pick-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const formId = this.getAttribute('data-form');
@@ -166,18 +168,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 关闭地图弹窗
-    document.querySelector('.close').addEventListener('click', function() {
-        document.getElementById('mapModal').style.display = 'none';
-    });
+    // ---------- 关闭地图弹窗 ----------
+    const closeBtn = document.querySelector('.close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            document.getElementById('mapModal').style.display = 'none';
+        });
+    }
     window.addEventListener('click', function(e) {
         const modal = document.getElementById('mapModal');
         if (e.target === modal) modal.style.display = 'none';
     });
 
-    // 表单提交相关
+    // ---------- 表单提交到 Cloudflare Functions ----------
     const API_ENDPOINT = '/submit';
-
     async function submitForm(formId, type) {
         const form = document.getElementById(formId);
         if (!form) return;
@@ -243,7 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         submitForm('supplierForm', '供应商');
     });
-
     document.getElementById('merchantForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         submitForm('merchantForm', '商家');
@@ -291,5 +294,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    bindQrcodeClick(); // 在 DOM 加载完成后绑定二维码点击事件
+    // 执行二维码绑定
+    bindQrcodeClick();
 });
