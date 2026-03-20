@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---------- 加载平台简介 ----------
+    // ---------- 加载平台简介（支持图文）----------
     fetch('data/intro.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(contentBlocks => {
             const introContentDiv = document.getElementById('intro-content');
             if (!introContentDiv) return;
-            introContentDiv.innerHTML = ''; // 清空
+            introContentDiv.innerHTML = '';
             contentBlocks.forEach(block => {
                 if (block.type === 'text') {
                     const p = document.createElement('p');
@@ -53,22 +53,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const newsListDiv = document.getElementById('news-list');
             if (!newsListDiv) return;
             newsListDiv.innerHTML = '';
-
             newsArray.forEach(item => {
                 const article = document.createElement('article');
                 article.className = 'news-item';
 
-                // 标题和时间
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'news-header';
-                headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📅 ${item.time}</div>`;
+                headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
 
-                // 正文容器（初始隐藏）
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'news-content';
                 contentDiv.style.display = 'none';
 
-                // 生成正文
                 if (Array.isArray(item.content)) {
                     item.content.forEach(block => {
                         if (block.type === 'text') {
@@ -85,7 +81,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
                 } else {
-                    // 兼容旧格式
                     const p = document.createElement('p');
                     p.textContent = item.content;
                     contentDiv.appendChild(p);
@@ -168,13 +163,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---------- 关闭地图弹窗 ----------
-    const closeBtn = document.querySelector('.close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-            document.getElementById('mapModal').style.display = 'none';
-        });
-    }
+    // 关闭地图弹窗
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('mapModal').style.display = 'none';
+    });
     window.addEventListener('click', function(e) {
         const modal = document.getElementById('mapModal');
         if (e.target === modal) modal.style.display = 'none';
@@ -182,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ---------- 表单提交到 Cloudflare Functions ----------
     const API_ENDPOINT = '/submit';
+
     async function submitForm(formId, type) {
         const form = document.getElementById(formId);
         if (!form) return;
@@ -247,6 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         submitForm('supplierForm', '供应商');
     });
+
     document.getElementById('merchantForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         submitForm('merchantForm', '商家');
@@ -255,7 +249,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // ---------- 二维码点击放大和保存 ----------
     function createQrcodeModal() {
         if (document.getElementById('qrcodeModal')) return;
-
         const modalDiv = document.createElement('div');
         modalDiv.id = 'qrcodeModal';
         modalDiv.className = 'qrcode-modal';
@@ -280,9 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function bindQrcodeClick() {
         const qrcodeImgs = document.querySelectorAll('.qrcode-img');
         if (qrcodeImgs.length === 0) return;
-
         createQrcodeModal();
-
         qrcodeImgs.forEach(img => {
             img.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -294,6 +285,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 执行二维码绑定
     bindQrcodeClick();
 });
