@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 左侧菜单切换
     const menuItems = document.querySelectorAll('.menu-item');
     const pages = document.querySelectorAll('.page');
+
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
             const targetId = this.getAttribute('data-target');
@@ -52,15 +53,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const newsListDiv = document.getElementById('news-list');
             if (!newsListDiv) return;
             newsListDiv.innerHTML = '';
+
             newsArray.forEach(item => {
                 const article = document.createElement('article');
                 article.className = 'news-item';
+
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'news-header';
                 headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
+
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'news-content';
                 contentDiv.style.display = 'none';
+
                 if (Array.isArray(item.content)) {
                     item.content.forEach(block => {
                         if (block.type === 'text') {
@@ -81,11 +86,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     p.textContent = item.content;
                     contentDiv.appendChild(p);
                 }
+
                 article.appendChild(headerDiv);
                 article.appendChild(contentDiv);
+
                 headerDiv.addEventListener('click', () => {
                     contentDiv.style.display = contentDiv.style.display === 'none' ? 'block' : 'none';
                 });
+
                 newsListDiv.appendChild(article);
             });
         })
@@ -107,10 +115,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const citySelect = document.getElementById(citySelectId);
                 const distSelect = document.getElementById(distSelectId);
                 if (!provSelect) return;
+
                 provSelect.innerHTML = '<option value="">请选择省</option>';
                 areaData.forEach(p => {
                     provSelect.add(new Option(p.name, p.code));
                 });
+
                 provSelect.addEventListener('change', function() {
                     const selectedProvCode = this.value;
                     const prov = areaData.find(p => p.code == selectedProvCode);
@@ -122,6 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 });
+
                 citySelect.addEventListener('change', function() {
                     const selectedCityCode = this.value;
                     const provCode = provSelect.value;
@@ -136,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
+
             initProvince('supplierProvince', 'supplierCity', 'supplierDistrict');
             initProvince('merchantProvince', 'merchantCity', 'merchantDistrict');
         })
@@ -163,25 +175,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === modal) modal.style.display = 'none';
     });
 
-    // ---------- 表单提交 ----------
+    // 表单提交相关
     const API_ENDPOINT = '/submit';
+
     async function submitForm(formId, type) {
         const form = document.getElementById(formId);
         if (!form) return;
+
         const shopName = form.querySelector('input[name="shopName"]').value.trim();
         const contactPhone = form.querySelector('input[name="contactPhone"]').value.trim();
         const contactName = form.querySelector('input[name="contactName"]').value.trim();
         const detailAddress = form.querySelector('input[name="detailAddress"]').value.trim();
+
         const provSelect = form.querySelector('select[name="province"]');
         const citySelect = form.querySelector('select[name="city"]');
         const distSelect = form.querySelector('select[name="district"]');
         const province = provSelect.options[provSelect.selectedIndex]?.text || '';
         const city = citySelect.options[citySelect.selectedIndex]?.text || '';
         const district = distSelect.options[distSelect.selectedIndex]?.text || '';
+
         if (!shopName || !contactName || !contactPhone || !province || !city || !district || !detailAddress) {
             alert('请填写所有必填字段');
             return false;
         }
+
         const payload = {
             type: type,
             shopName: shopName,
@@ -193,15 +210,18 @@ document.addEventListener('DOMContentLoaded', function() {
             detailAddress: detailAddress,
             timestamp: new Date().toISOString()
         };
+
         try {
             const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.textContent = '提交中...';
             submitBtn.disabled = true;
+
             const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+
             const result = await response.json();
             if (result.code === 0) {
                 alert(`${type}入驻申请提交成功！`);
@@ -218,61 +238,58 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = false;
         }
     }
+
     document.getElementById('supplierForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         submitForm('supplierForm', '供应商');
     });
+
     document.getElementById('merchantForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         submitForm('merchantForm', '商家');
     });
 
-// ---------- 二维码点击放大和保存 ----------
-// 创建模态框元素（如果尚未存在）
-function createQrcodeModal() {
-    if (document.getElementById('qrcodeModal')) return;
+    // ---------- 二维码点击放大和保存 ----------
+    function createQrcodeModal() {
+        if (document.getElementById('qrcodeModal')) return;
 
-    const modalDiv = document.createElement('div');
-    modalDiv.id = 'qrcodeModal';
-    modalDiv.className = 'qrcode-modal';
-    modalDiv.innerHTML = `
-        <span class="qrcode-modal-close">&times;</span>
-        <div class="qrcode-modal-content">
-            <img id="qrcodeModalImg" src="" alt="二维码">
-        </div>
-        <div class="download-tip">长按图片即可保存到手机</div>
-    `;
-    document.body.appendChild(modalDiv);
+        const modalDiv = document.createElement('div');
+        modalDiv.id = 'qrcodeModal';
+        modalDiv.className = 'qrcode-modal';
+        modalDiv.innerHTML = `
+            <span class="qrcode-modal-close">&times;</span>
+            <div class="qrcode-modal-content">
+                <img id="qrcodeModalImg" src="" alt="二维码">
+            </div>
+            <div class="download-tip">长按图片即可保存到手机</div>
+        `;
+        document.body.appendChild(modalDiv);
 
-    // 关闭模态框
-    const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
-    closeBtn.addEventListener('click', () => {
-        modalDiv.style.display = 'none';
-    });
-    modalDiv.addEventListener('click', (e) => {
-        if (e.target === modalDiv) modalDiv.style.display = 'none';
-    });
-}
-
-// 绑定二维码点击事件
-function bindQrcodeClick() {
-    const qrcodeImgs = document.querySelectorAll('.qrcode-img');
-    if (qrcodeImgs.length === 0) return;
-
-    createQrcodeModal();
-
-    qrcodeImgs.forEach(img => {
-        img.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const modalImg = document.getElementById('qrcodeModalImg');
-            modalImg.src = img.src;
-            modalImg.alt = img.alt;
-            document.getElementById('qrcodeModal').style.display = 'flex';
+        const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
+        closeBtn.addEventListener('click', () => {
+            modalDiv.style.display = 'none';
         });
-    });
-}
+        modalDiv.addEventListener('click', (e) => {
+            if (e.target === modalDiv) modalDiv.style.display = 'none';
+        });
+    }
 
-// 在页面加载完成后执行（注意：不要重复添加 DOMContentLoaded 监听器）
-// 因为前面已经有一个 DOMContentLoaded 监听器了，所以这里直接调用即可，但为了保险，确保 DOM 已加载。
-// 如果前面的监听器已经包含了此函数调用，这里就不需要再调用。但您的代码中前面没有调用，所以在这里调用：
-bindQrcodeClick();
+    function bindQrcodeClick() {
+        const qrcodeImgs = document.querySelectorAll('.qrcode-img');
+        if (qrcodeImgs.length === 0) return;
+
+        createQrcodeModal();
+
+        qrcodeImgs.forEach(img => {
+            img.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const modalImg = document.getElementById('qrcodeModalImg');
+                modalImg.src = img.src;
+                modalImg.alt = img.alt;
+                document.getElementById('qrcodeModal').style.display = 'flex';
+            });
+        });
+    }
+
+    bindQrcodeClick(); // 在 DOM 加载完成后绑定二维码点击事件
+});
