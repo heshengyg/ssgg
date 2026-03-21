@@ -1,4 +1,4 @@
-// main.js - 完整稳定版
+// main.js - 完整稳定版（新闻支持视频）
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ main.js loaded');
 
@@ -16,51 +16,50 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---------- 加载平台简介（支持图文）----------
-// 加载平台简介内容
-fetch('data/intro.json')
-    .then(res => {
-        if (!res.ok) throw new Error('网络响应失败');
-        return res.json();
-    })
-    .then(contentBlocks => {
-        const introContentDiv = document.getElementById('intro-content');
-        if (!introContentDiv) return;
-        introContentDiv.innerHTML = ''; // 清空
-        contentBlocks.forEach(block => {
-            if (block.type === 'text') {
-                const p = document.createElement('p');
-                p.textContent = block.content;
-                introContentDiv.appendChild(p);
-            } else if (block.type === 'image') {
-                const img = document.createElement('img');
-                img.src = block.src;
-                img.alt = block.alt || '';
-                img.style.maxWidth = '100%';
-                img.style.margin = '10px 0';
-                introContentDiv.appendChild(img);
-            } else if (block.type === 'video') {
-    const video = document.createElement('video');
-    video.src = block.src;
-    if (block.poster) video.poster = block.poster;
-    video.controls = true;       // 显示播放控件
-    video.autoplay = true;       // 自动播放
-    video.muted = true;          // 静音（自动播放必须静音）
-    video.loop = true;           // 循环播放
-    video.style.maxWidth = '100%';
-    video.style.margin = '10px 0';
-    video.style.borderRadius = '8px';
-    video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-    introContentDiv.appendChild(video);
-}
+    // ---------- 加载平台简介（支持图文、视频）----------
+    fetch('data/intro.json')
+        .then(res => {
+            if (!res.ok) throw new Error('网络响应失败');
+            return res.json();
+        })
+        .then(contentBlocks => {
+            const introContentDiv = document.getElementById('intro-content');
+            if (!introContentDiv) return;
+            introContentDiv.innerHTML = '';
+            contentBlocks.forEach(block => {
+                if (block.type === 'text') {
+                    const p = document.createElement('p');
+                    p.textContent = block.content;
+                    introContentDiv.appendChild(p);
+                } else if (block.type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = block.src;
+                    img.alt = block.alt || '';
+                    img.style.maxWidth = '100%';
+                    img.style.margin = '10px 0';
+                    introContentDiv.appendChild(img);
+                } else if (block.type === 'video') {
+                    const video = document.createElement('video');
+                    video.src = block.src;
+                    if (block.poster) video.poster = block.poster;
+                    video.controls = true;
+                    video.autoplay = true;
+                    video.muted = true;
+                    video.loop = true;
+                    video.style.maxWidth = '100%';
+                    video.style.margin = '10px 0';
+                    video.style.borderRadius = '8px';
+                    video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    introContentDiv.appendChild(video);
+                }
+            });
+        })
+        .catch(err => {
+            console.error('平台简介加载失败：', err);
+            document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
-    })
-    .catch(err => {
-        console.error('平台简介加载失败：', err);
-        document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
-    });
 
-    // ---------- 加载平台要闻（支持图文混排）----------
+    // ---------- 加载平台要闻（支持图文、视频）----------
     fetch('data/news.json')
         .then(res => res.json())
         .then(newsArray => {
@@ -92,6 +91,19 @@ fetch('data/intro.json')
                             img.style.maxWidth = '100%';
                             img.style.margin = '10px 0';
                             contentDiv.appendChild(img);
+                        } else if (block.type === 'video') {
+                            const video = document.createElement('video');
+                            video.src = block.src;
+                            if (block.poster) video.poster = block.poster;
+                            video.controls = true;
+                            video.autoplay = true;
+                            video.muted = true;
+                            video.loop = true;
+                            video.style.maxWidth = '100%';
+                            video.style.margin = '10px 0';
+                            video.style.borderRadius = '8px';
+                            video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                            contentDiv.appendChild(video);
                         }
                     });
                 } else {
@@ -261,30 +273,30 @@ fetch('data/intro.json')
     });
 
     // ---------- 二维码点击放大和保存 ----------
-function createQrcodeModal() {
-    if (document.getElementById('qrcodeModal')) return;
-    const modalDiv = document.createElement('div');
-    modalDiv.id = 'qrcodeModal';
-    modalDiv.className = 'qrcode-modal';
-    modalDiv.innerHTML = `
-        <span class="qrcode-modal-close">&times;</span>
-        <div class="qrcode-modal-content">
-            <img id="qrcodeModalImg" src="" alt="二维码">
-        </div>
-        <div class="download-tip">长按图片即可保存到手机</div>
-    `;
-    document.body.appendChild(modalDiv);
-    modalDiv.style.display = 'none'; // 强制初始隐藏
-
-    // 关闭模态框
-    const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
-    closeBtn.addEventListener('click', () => {
+    function createQrcodeModal() {
+        if (document.getElementById('qrcodeModal')) return;
+        const modalDiv = document.createElement('div');
+        modalDiv.id = 'qrcodeModal';
+        modalDiv.className = 'qrcode-modal';
+        modalDiv.innerHTML = `
+            <span class="qrcode-modal-close">&times;</span>
+            <div class="qrcode-modal-content">
+                <img id="qrcodeModalImg" src="" alt="二维码">
+            </div>
+            <div class="download-tip">长按图片即可保存到手机</div>
+        `;
+        document.body.appendChild(modalDiv);
         modalDiv.style.display = 'none';
-    });
-    modalDiv.addEventListener('click', (e) => {
-        if (e.target === modalDiv) modalDiv.style.display = 'none';
-    });
-}
+
+        const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
+        closeBtn.addEventListener('click', () => {
+            modalDiv.style.display = 'none';
+        });
+        modalDiv.addEventListener('click', (e) => {
+            if (e.target === modalDiv) modalDiv.style.display = 'none';
+        });
+    }
+
     function bindQrcodeClick() {
         const qrcodeImgs = document.querySelectorAll('.qrcode-img');
         if (qrcodeImgs.length === 0) return;
