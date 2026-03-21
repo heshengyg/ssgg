@@ -1,5 +1,11 @@
 [
     {
+        "type": "video",
+        "src": "images/intro_video.mp4",
+        "poster": "images/video_cover.jpg",   // 可选，封面图
+        "alt": "宣传视频"
+    },
+    {
         "type": "text",
         "content": "松鼠逛逛是连接社区与优质服务的数字化平台，致力于为居民提供便捷的本地生活服务，为供应商和商家拓展线上客源。"
     },
