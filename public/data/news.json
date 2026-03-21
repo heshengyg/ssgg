@@ -9,7 +9,7 @@
             },
             {
                 "type": "image",
-                "src": "news3.jpg",
+                "src": "images/news3.jpg",
                 "alt": "看台球迷"
             },
             {
@@ -23,7 +23,7 @@
             },
             {
                 "type": "image",
-                "src": "news4.jpg",
+                "src": "images/news4.jpg",
                 "alt": "赛场瞬间"
             },
             {
@@ -32,7 +32,7 @@
             },
             {
                 "type": "image",
-                "src": "news5.jpg",
+                "src": "images/news5.jpg",
                 "alt": "球迷助威"
             },
             {
