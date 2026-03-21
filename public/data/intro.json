@@ -2,7 +2,7 @@
     {
         "type": "video",
         "src": "images/intro_video.mp4",
-        "poster": "images/video_cover.jpg",   // 可选，封面图
+        "poster": "images/video_cover.jpg",
         "alt": "宣传视频"
     },
     {
