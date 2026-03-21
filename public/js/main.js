@@ -17,34 +17,48 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ---------- 加载平台简介（支持图文）----------
-    fetch('data/intro.json')
-        .then(res => {
-            if (!res.ok) throw new Error('网络响应失败');
-            return res.json();
-        })
-        .then(contentBlocks => {
-            const introContentDiv = document.getElementById('intro-content');
-            if (!introContentDiv) return;
-            introContentDiv.innerHTML = '';
-            contentBlocks.forEach(block => {
-                if (block.type === 'text') {
-                    const p = document.createElement('p');
-                    p.textContent = block.content;
-                    introContentDiv.appendChild(p);
-                } else if (block.type === 'image') {
-                    const img = document.createElement('img');
-                    img.src = block.src;
-                    img.alt = block.alt || '';
-                    img.style.maxWidth = '100%';
-                    img.style.margin = '10px 0';
-                    introContentDiv.appendChild(img);
-                }
-            });
-        })
-        .catch(err => {
-            console.error('平台简介加载失败：', err);
-            document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
+// 加载平台简介内容
+fetch('data/intro.json')
+    .then(res => {
+        if (!res.ok) throw new Error('网络响应失败');
+        return res.json();
+    })
+    .then(contentBlocks => {
+        const introContentDiv = document.getElementById('intro-content');
+        if (!introContentDiv) return;
+        introContentDiv.innerHTML = ''; // 清空
+        contentBlocks.forEach(block => {
+            if (block.type === 'text') {
+                const p = document.createElement('p');
+                p.textContent = block.content;
+                introContentDiv.appendChild(p);
+            } else if (block.type === 'image') {
+                const img = document.createElement('img');
+                img.src = block.src;
+                img.alt = block.alt || '';
+                img.style.maxWidth = '100%';
+                img.style.margin = '10px 0';
+                introContentDiv.appendChild(img);
+            } else if (block.type === 'video') {
+    const video = document.createElement('video');
+    video.src = block.src;
+    if (block.poster) video.poster = block.poster;
+    video.controls = true;       // 显示播放控件
+    video.autoplay = true;       // 自动播放
+    video.muted = true;          // 静音（自动播放必须静音）
+    video.loop = true;           // 循环播放
+    video.style.maxWidth = '100%';
+    video.style.margin = '10px 0';
+    video.style.borderRadius = '8px';
+    video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+    introContentDiv.appendChild(video);
+}
         });
+    })
+    .catch(err => {
+        console.error('平台简介加载失败：', err);
+        document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
+    });
 
     // ---------- 加载平台要闻（支持图文混排）----------
     fetch('data/news.json')
