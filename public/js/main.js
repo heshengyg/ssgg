@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
             contentBlocks.forEach(block => {
                 if (block.type === 'text') {
                     const p = document.createElement('p');
-                    p.textContent = block.content;
+                    p.innerHTML = block.content;
                     introContentDiv.appendChild(p);
                 } else if (block.type === 'image') {
                     const img = document.createElement('img');
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     item.content.forEach(block => {
                         if (block.type === 'text') {
                             const p = document.createElement('p');
-                            p.textContent = block.value;
+                            p.innerHTML = block.value;
                             contentDiv.appendChild(p);
                         } else if (block.type === 'image') {
                             const img = document.createElement('img');
