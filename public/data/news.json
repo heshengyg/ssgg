@@ -15,7 +15,7 @@
 
             {
                 "type": "video",
-                "src": "images/"news_video2.mp4",
+                "src": "images/news_video2.mp4,
                 "alt": "alt"
             },
 
@@ -26,7 +26,7 @@
             {
                 "type": "image",
                 "src": "news4.jpg",
-                "alt": "
+                "alt": "alt"
             },
 
             {
@@ -37,7 +37,7 @@
             {
                 "type": "image",
                 "src": "news5.jpg",
-                "alt": "
+                "alt": "alt"
             },
 
             {
