@@ -15,7 +15,7 @@
             {
                 "type": "video",
                 "src": "images/news_video2.mp4",
-                "alt": "比赛视频"
+                "alt": "alt"
             },
             {
                 "type": "text",
@@ -24,16 +24,17 @@
             {
                 "type": "image",
                 "src": "images/news4.jpg",
-                "alt": "赛场瞬间"
+                "alt": "alt"
             },
             {
                 "type": "text",
-                "value": "沙坪坝陈昌银队将在主场双碑嘉陵足球场对战秀山毛尖队\n各位小伙伴准备好了吗？！"
+                "value": "沙坪坝陈昌银队将在主场双碑嘉陵足球场对战秀山毛尖队
+各位小伙伴准备好了吗？！"
             },
             {
                 "type": "image",
                 "src": "images/news5.jpg",
-                "alt": "球迷助威"
+                "alt": "alt"
             },
             {
                 "type": "text",
