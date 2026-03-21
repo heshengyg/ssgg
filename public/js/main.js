@@ -1,18 +1,30 @@
-// main.js - 完整稳定版（新闻支持视频）
+// main.js - 完整稳定版（切换页面时自动暂停视频）
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ main.js loaded');
 
-    // ---------- 左侧菜单切换 ----------
+    // ---------- 左侧菜单切换（自动暂停视频） ----------
     const menuItems = document.querySelectorAll('.menu-item');
     const pages = document.querySelectorAll('.page');
 
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
             const targetId = this.getAttribute('data-target');
+            const currentPage = document.querySelector('.page.active');
+            const targetPage = document.getElementById(targetId);
+
+            // 如果目标页面与当前页面不同，则暂停当前页面中的所有视频
+            if (currentPage && currentPage !== targetPage) {
+                const videos = currentPage.querySelectorAll('video');
+                videos.forEach(video => {
+                    video.pause();
+                });
+            }
+
+            // 切换菜单和页面
             menuItems.forEach(m => m.classList.remove('active'));
             pages.forEach(p => p.classList.remove('active'));
             this.classList.add('active');
-            document.getElementById(targetId).classList.add('active');
+            targetPage.classList.add('active');
         });
     });
 
