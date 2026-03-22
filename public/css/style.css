@@ -560,3 +560,9 @@ video {
     margin-bottom: 0.8em;
     line-height: 1.6;
 }
+
+/* 平台要闻正文段落样式 */
+.news-content p {
+    margin: 0 0 0.8em 0;
+    line-height: 1.6;
+}
