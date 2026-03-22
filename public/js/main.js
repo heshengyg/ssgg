@@ -77,7 +77,7 @@ if (block.type === 'text') {
             document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-// ---------- 加载平台要闻（支持图文混排，自动暂停视频）----------
+// ---------- 加载平台要闻（支持图文混排，独占播放视频）----------
 fetch('data/news.json')
     .then(res => res.json())
     .then(newsArray => {
@@ -85,11 +85,22 @@ fetch('data/news.json')
         if (!newsListDiv) return;
         newsListDiv.innerHTML = '';
 
-        // 辅助函数：暂停所有新闻正文中的视频
+        // 辅助函数：暂停所有新闻正文中的视频（可选，但不一定需要）
         function pauseAllNewsVideos() {
             const allVideos = document.querySelectorAll('.news-content video');
-            allVideos.forEach(video => {
-                if (!video.paused) video.pause();
+            allVideos.forEach(video => video.pause());
+        }
+
+        // 辅助函数：为视频添加独占播放功能
+        function makeVideoExclusive(video) {
+            video.addEventListener('play', function() {
+                // 当此视频开始播放时，暂停所有其他视频
+                const allVideos = document.querySelectorAll('.news-content video');
+                allVideos.forEach(v => {
+                    if (v !== video && !v.paused) {
+                        v.pause();
+                    }
+                });
             });
         }
 
@@ -109,8 +120,7 @@ fetch('data/news.json')
                 item.content.forEach(block => {
                     if (block.type === 'text') {
                         const p = document.createElement('p');
-                        p.innerHTML = block.value;  // 使用 innerHTML 支持加粗等标签
-                        // 根据 indent 字段添加缩进类（可选）
+                        p.innerHTML = block.value;
                         if (block.indent === true) {
                             p.classList.add('indent-paragraph');
                         } else {
@@ -136,6 +146,8 @@ fetch('data/news.json')
                         video.style.margin = '10px 0';
                         video.style.borderRadius = '8px';
                         video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                        // 添加独占播放监听
+                        makeVideoExclusive(video);
                         contentDiv.appendChild(video);
                     }
                 });
@@ -148,16 +160,15 @@ fetch('data/news.json')
             article.appendChild(headerDiv);
             article.appendChild(contentDiv);
 
-            // 点击标题时，先暂停所有视频，再切换当前正文的显示
             headerDiv.addEventListener('click', () => {
-                // 暂停所有其他视频
-                pauseAllNewsVideos();
-                // 切换当前正文显示状态
+                // 如果当前正文隐藏，则显示它，并暂停其他视频（可选）
                 if (contentDiv.style.display === 'none') {
+                    // 可选：在显示前暂停所有视频，避免后台播放
+                    pauseAllNewsVideos();
                     contentDiv.style.display = 'block';
                 } else {
                     contentDiv.style.display = 'none';
-                    // 如果当前正文中有视频，也暂停它们
+                    // 如果收起，暂停当前正文中的视频
                     const videosInCurrent = contentDiv.querySelectorAll('video');
                     videosInCurrent.forEach(v => v.pause());
                 }
@@ -170,7 +181,6 @@ fetch('data/news.json')
         console.warn('新闻加载失败', err);
         document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
     });
-
     // ---------- 加载省市区数据 ----------
     fetch('data/areas_nested.json')
         .then(res => {
