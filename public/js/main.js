@@ -107,7 +107,7 @@ if (block.type === 'text') {
     } else {
         p.classList.add('no-indent-paragraph');
     }
-    introContentDiv.appendChild(p);
+    ContentDiv.appendChild(p);
 }else if (block.type === 'image') {
                             const img = document.createElement('img');
                             img.src = block.src;
