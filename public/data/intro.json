@@ -1,13 +1,8 @@
 [
     {
-        "type": "image",
-        "src": "images/intro1.jpg",
-        "alt": "alt"
-    },
-    {
         "type": "video",
         "src": "images/intro_video1.mp4",
-        "poster": "images/intro_video1_cover.jpg",
+        "poster": "intro_video1_cover.jpg",
         "alt": "234"
     },
     {
@@ -22,7 +17,7 @@
     },
     {
         "type": "text",
-        "content": "“松鼠逛逛”社区生活电商平台秉持“<b>商业创新、服务社区</b>”的理念，主要有以下特点：",
+        "content": "“松鼠逛逛”社区生活电商平台秉持“<b>商业创新、服务社区</b>”的理念，主要有以下特点 ：",
         "indent": true
     },
     {
@@ -33,6 +28,11 @@
         "type": "text",
         "content": "门店可免费入驻电商平台，拓展线上销售。平台供应链链接上游厂家优质货源，门店通过平台商品库选择销售，真正做到为社区实体门店经营赋能。商品通过线上门店展示，不需要进货，有订单，平台通过“次日达”方式配送到店。",
         "indent": true
+    },
+    {
+        "type": "image",
+        "src": "images/intro1.jpg",
+        "alt": "alt"
     },
     {
         "type": "text",
