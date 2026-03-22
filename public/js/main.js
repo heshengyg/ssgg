@@ -77,77 +77,76 @@ if (block.type === 'text') {
             document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- 加载平台要闻（支持图文、视频）----------
-    fetch('data/news.json')
-        .then(res => res.json())
-        .then(newsArray => {
-            const newsListDiv = document.getElementById('news-list');
-            if (!newsListDiv) return;
-            newsListDiv.innerHTML = '';
-            newsArray.forEach(item => {
-                const article = document.createElement('article');
-                article.className = 'news-item';
+// ---------- 加载平台要闻（支持图文、视频、缩进）----------
+fetch('data/news.json')
+    .then(res => res.json())
+    .then(newsArray => {
+        const newsListDiv = document.getElementById('news-list');
+        if (!newsListDiv) return;
+        newsListDiv.innerHTML = '';
+        newsArray.forEach(item => {
+            const article = document.createElement('article');
+            article.className = 'news-item';
 
-                const headerDiv = document.createElement('div');
-                headerDiv.className = 'news-header';
-                headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'news-header';
+            headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
 
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'news-content';
-                contentDiv.style.display = 'none';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'news-content';
+            contentDiv.style.display = 'none';
 
-                if (Array.isArray(item.content)) {
-                    item.content.forEach(block => {
-                        if (block.type === 'text') {
-    const p = document.createElement('p');
-    p.innerHTML = block.content;
-    // 根据 indent 属性添加不同的类
-    if (block.indent === true) {
-        p.classList.add('indent-paragraph');
-    } else {
-        p.classList.add('no-indent-paragraph');
-    }
-    ContentDiv.appendChild(p);
-}else if (block.type === 'image') {
-                            const img = document.createElement('img');
-                            img.src = block.src;
-                            img.alt = block.alt || '';
-                            img.style.maxWidth = '100%';
-                            img.style.margin = '10px 0';
-                            contentDiv.appendChild(img);
-                        } else if (block.type === 'video') {
-                            const video = document.createElement('video');
-                            video.src = block.src;
-                            if (block.poster) video.poster = block.poster;
-                            video.controls = true;
-                            video.autoplay = true;
-                            video.muted = true;
-                            video.loop = true;
-                            video.style.maxWidth = '100%';
-                            video.style.margin = '10px 0';
-                            video.style.borderRadius = '8px';
-                            video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                            contentDiv.appendChild(video);
+            if (Array.isArray(item.content)) {
+                item.content.forEach(block => {
+                    if (block.type === 'text') {
+                        const p = document.createElement('p');
+                        p.innerHTML = block.value;
+                        if (block.indent === true) {
+                            p.classList.add('indent-paragraph');
+                        } else {
+                            p.classList.add('no-indent-paragraph');
                         }
-                    });
-                } else {
-                    const p = document.createElement('p');
-                    p.textContent = item.content;
-                    contentDiv.appendChild(p);
-                }
-
-                article.appendChild(headerDiv);
-                article.appendChild(contentDiv);
-                headerDiv.addEventListener('click', () => {
-                    contentDiv.style.display = contentDiv.style.display === 'none' ? 'block' : 'none';
+                        contentDiv.appendChild(p);
+                    } else if (block.type === 'image') {
+                        const img = document.createElement('img');
+                        img.src = block.src;
+                        img.alt = block.alt || '';
+                        img.style.maxWidth = '100%';
+                        img.style.margin = '10px 0';
+                        contentDiv.appendChild(img);
+                    } else if (block.type === 'video') {
+                        const video = document.createElement('video');
+                        video.src = block.src;
+                        if (block.poster) video.poster = block.poster;
+                        video.controls = true;
+                        video.autoplay = true;
+                        video.muted = true;
+                        video.loop = true;
+                        video.style.maxWidth = '100%';
+                        video.style.margin = '10px 0';
+                        video.style.borderRadius = '8px';
+                        video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                        contentDiv.appendChild(video);
+                    }
                 });
-                newsListDiv.appendChild(article);
+            } else {
+                const p = document.createElement('p');
+                p.innerHTML = item.content;
+                contentDiv.appendChild(p);
+            }
+
+            article.appendChild(headerDiv);
+            article.appendChild(contentDiv);
+            headerDiv.addEventListener('click', () => {
+                contentDiv.style.display = contentDiv.style.display === 'none' ? 'block' : 'none';
             });
-        })
-        .catch(err => {
-            console.warn('新闻加载失败', err);
-            document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
+            newsListDiv.appendChild(article);
         });
+    })
+    .catch(err => {
+        console.warn('新闻加载失败', err);
+        document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
+    });
 
     // ---------- 加载省市区数据 ----------
     fetch('data/areas_nested.json')
