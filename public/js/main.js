@@ -39,11 +39,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!introContentDiv) return;
             introContentDiv.innerHTML = '';
             contentBlocks.forEach(block => {
-                if (block.type === 'text') {
-                    const p = document.createElement('p');
-                    p.innerHTML = block.content;
-                    introContentDiv.appendChild(p);
-                } else if (block.type === 'image') {
+if (block.type === 'text') {
+    const p = document.createElement('p');
+    p.innerHTML = block.content;
+    // 根据 indent 属性添加不同的类
+    if (block.indent === true) {
+        p.classList.add('indent-paragraph');
+    } else {
+        p.classList.add('no-indent-paragraph');
+    }
+    introContentDiv.appendChild(p);
+} else if (block.type === 'image') {
                     const img = document.createElement('img');
                     img.src = block.src;
                     img.alt = block.alt || '';
@@ -93,10 +99,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (Array.isArray(item.content)) {
                     item.content.forEach(block => {
                         if (block.type === 'text') {
-                            const p = document.createElement('p');
-                            p.innerHTML = block.value;
-                            contentDiv.appendChild(p);
-                        } else if (block.type === 'image') {
+    const p = document.createElement('p');
+    p.innerHTML = block.content;
+    // 根据 indent 属性添加不同的类
+    if (block.indent === true) {
+        p.classList.add('indent-paragraph');
+    } else {
+        p.classList.add('no-indent-paragraph');
+    }
+    introContentDiv.appendChild(p);
+}else if (block.type === 'image') {
                             const img = document.createElement('img');
                             img.src = block.src;
                             img.alt = block.alt || '';

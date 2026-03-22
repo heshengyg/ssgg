@@ -546,3 +546,17 @@ video {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     background: #000;
 }
+
+/* 缩进段落 */
+.indent-paragraph {
+    text-indent: 2em;
+    margin-bottom: 0.8em;
+    line-height: 1.6;
+}
+
+/* 顶格段落 */
+.no-indent-paragraph {
+    text-indent: 0;
+    margin-bottom: 0.8em;
+    line-height: 1.6;
+}
