@@ -1,4 +1,4 @@
-// main.js - 最终版（手机端简介图片放大修复）
+// main.js - 微信图片缩放完美修复版（双指缩放 + 拖动 + 重置）
 // 图片查看器函数（全局）
 function createImageModal() {
     if (document.getElementById('imageModal')) return;
@@ -15,21 +15,86 @@ function createImageModal() {
             <span class="image-modal-counter"></span>
             <button class="image-modal-next" disabled>&gt;</button>
         </div>
-        <div class="image-modal-tip">点击图片关闭</div>
+        <div class="image-modal-tip">双指缩放 / 拖动查看</div>
     `;
     document.body.appendChild(modalDiv);
 
     const closeBtn = modalDiv.querySelector('.image-modal-close');
     closeBtn.addEventListener('click', () => {
+        resetImageScale();
         modalDiv.style.display = 'none';
     });
     modalDiv.addEventListener('click', (e) => {
-        if (e.target === modalDiv) modalDiv.style.display = 'none';
+        if (e.target === modalDiv) {
+            resetImageScale();
+            modalDiv.style.display = 'none';
+        }
     });
     const img = modalDiv.querySelector('#imageModalImg');
     img.addEventListener('click', () => {
+        resetImageScale();
         modalDiv.style.display = 'none';
     });
+
+    // 微信/移动端 双指缩放 + 拖动逻辑
+    let scale = 1;
+    let startX = 0, startY = 0;
+    let translateX = 0, translateY = 0;
+    let lastScale = 1;
+    let isDragging = false;
+    let startDistance = 0;
+
+    function resetImageScale() {
+        scale = 1;
+        translateX = 0;
+        translateY = 0;
+        lastScale = 1;
+        img.style.transform = 'translate(0, 0) scale(1)';
+        img.style.transition = 'transform 0.2s ease';
+    }
+
+    img.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        if (e.touches.length === 2) {
+            const p1 = e.touches[0];
+            const p2 = e.touches[1];
+            const xDiff = Math.abs(p1.clientX - p2.clientX);
+            const yDiff = Math.abs(p1.clientY - p2.clientY);
+            startDistance = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+        } else if (e.touches.length === 1) {
+            startX = e.touches[0].clientX - translateX;
+            startY = e.touches[0].clientY - translateY;
+            isDragging = true;
+        }
+    }, { passive: false });
+
+    img.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        if (e.touches.length === 2) {
+            const p1 = e.touches[0];
+            const p2 = e.touches[1];
+            const xDiff = Math.abs(p1.clientX - p2.clientX);
+            const yDiff = Math.abs(p1.clientY - p2.clientY);
+            const distance = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+            scale = lastScale * (distance / startDistance);
+            
+            if (scale < 0.5) scale = 0.5;
+            if (scale > 3) scale = 3;
+
+            img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        } else if (e.touches.length === 1 && isDragging && scale > 1) {
+            translateX = e.touches[0].clientX - startX;
+            translateY = e.touches[0].clientY - startY;
+            img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
+    }, { passive: false });
+
+    img.addEventListener('touchend', function() {
+        lastScale = scale;
+        isDragging = false;
+    });
+
+    window.resetImageScale = resetImageScale;
 }
 
 let currentImageList = [];
@@ -42,6 +107,7 @@ function showImageModal(images, index) {
     currentImageIndex = index;
     updateImageModal();
     modal.style.display = 'flex';
+    resetImageScale(); // 每次打开重置缩放
 }
 
 function updateImageModal() {
@@ -72,12 +138,14 @@ function bindImageModalEvents() {
         if (currentImageIndex > 0) {
             currentImageIndex--;
             updateImageModal();
+            resetImageScale();
         }
     });
     nextBtn.addEventListener('click', () => {
         if (currentImageIndex < currentImageList.length - 1) {
             currentImageIndex++;
             updateImageModal();
+            resetImageScale();
         }
     });
 }
@@ -109,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---------- 加载平台简介（支持图文、视频，图片点击放大左右浏览，移动端优化）----------
+    // ---------- 加载平台简介 ----------
     fetch('data/intro.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -120,7 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!introContentDiv) return;
             introContentDiv.innerHTML = '';
 
-            // 收集简介中的所有图片信息
             const introImages = [];
 
             contentBlocks.forEach(block => {
@@ -141,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     img.style.margin = '10px 0';
                     img.style.cursor = 'pointer';
                     img.loading = 'lazy';
-                    img.style.touchAction = 'manipulation'; // 提升移动端触摸响应
+                    img.style.touchAction = 'manipulation';
                     introContentDiv.appendChild(img);
                     introImages.push({ src: block.src, alt: block.alt || '' });
                 } else if (block.type === 'video') {
@@ -160,19 +227,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // 为简介图片绑定事件（同时支持 click 和 touchstart）
             if (introImages.length > 0) {
                 const imgElements = introContentDiv.querySelectorAll('img');
                 imgElements.forEach((imgEl, idx) => {
-                    // 移动端触摸优化
                     imgEl.style.touchAction = 'manipulation';
-                    
                     const handleImageClick = (e) => {
                         e.stopPropagation();
-                        e.preventDefault();  // 避免移动端长按菜单
+                        e.preventDefault();
                         showImageModal(introImages, idx);
                     };
-                    
                     imgEl.addEventListener('click', handleImageClick);
                     imgEl.addEventListener('touchstart', handleImageClick, { passive: false });
                 });
@@ -183,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- 加载平台要闻（支持图文混排，独占播放视频，图片点击放大左右浏览）----------
+    // ---------- 加载平台要闻 ----------
     fetch('data/news.json')
         .then(res => res.json())
         .then(newsArray => {
@@ -301,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- 加载省市区数据（保持不变）----------
+    // ---------- 加载省市区数据 ----------
     fetch('data/areas_nested.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
