@@ -1,4 +1,87 @@
-// main.js - 完整稳定版（切换页面时自动暂停视频）
+// main.js - 完整稳定版（含图片查看器）
+// 图片查看器函数（全局，用于新闻图片点击放大和左右浏览）
+function createImageModal() {
+    if (document.getElementById('imageModal')) return;
+    const modalDiv = document.createElement('div');
+    modalDiv.id = 'imageModal';
+    modalDiv.className = 'image-modal';
+    modalDiv.innerHTML = `
+        <span class="image-modal-close">&times;</span>
+        <div class="image-modal-content">
+            <img id="imageModalImg" src="" alt="">
+        </div>
+        <div class="image-modal-nav">
+            <button class="image-modal-prev" disabled>&lt;</button>
+            <span class="image-modal-counter"></span>
+            <button class="image-modal-next" disabled>&gt;</button>
+        </div>
+        <div class="image-modal-tip">点击图片关闭</div>
+    `;
+    document.body.appendChild(modalDiv);
+
+    const closeBtn = modalDiv.querySelector('.image-modal-close');
+    closeBtn.addEventListener('click', () => {
+        modalDiv.style.display = 'none';
+    });
+    modalDiv.addEventListener('click', (e) => {
+        if (e.target === modalDiv) modalDiv.style.display = 'none';
+    });
+    const img = modalDiv.querySelector('#imageModalImg');
+    img.addEventListener('click', () => {
+        modalDiv.style.display = 'none';
+    });
+}
+
+let currentImageList = [];
+let currentImageIndex = 0;
+
+function showImageModal(images, index) {
+    const modal = document.getElementById('imageModal');
+    if (!modal) return;
+    currentImageList = images;
+    currentImageIndex = index;
+    updateImageModal();
+    modal.style.display = 'flex';
+}
+
+function updateImageModal() {
+    const modal = document.getElementById('imageModal');
+    if (!modal) return;
+    const img = modal.querySelector('#imageModalImg');
+    const prevBtn = modal.querySelector('.image-modal-prev');
+    const nextBtn = modal.querySelector('.image-modal-next');
+    const counter = modal.querySelector('.image-modal-counter');
+
+    if (currentImageList.length === 0) return;
+
+    img.src = currentImageList[currentImageIndex].src;
+    img.alt = currentImageList[currentImageIndex].alt;
+
+    counter.textContent = `${currentImageIndex + 1} / ${currentImageList.length}`;
+    prevBtn.disabled = currentImageIndex === 0;
+    nextBtn.disabled = currentImageIndex === currentImageList.length - 1;
+}
+
+function bindImageModalEvents() {
+    const modal = document.getElementById('imageModal');
+    if (!modal) return;
+    const prevBtn = modal.querySelector('.image-modal-prev');
+    const nextBtn = modal.querySelector('.image-modal-next');
+
+    prevBtn.addEventListener('click', () => {
+        if (currentImageIndex > 0) {
+            currentImageIndex--;
+            updateImageModal();
+        }
+    });
+    nextBtn.addEventListener('click', () => {
+        if (currentImageIndex < currentImageList.length - 1) {
+            currentImageIndex++;
+            updateImageModal();
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ main.js loaded');
 
@@ -12,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentPage = document.querySelector('.page.active');
             const targetPage = document.getElementById(targetId);
 
-            // 如果目标页面与当前页面不同，则暂停当前页面中的所有视频
             if (currentPage && currentPage !== targetPage) {
                 const videos = currentPage.querySelectorAll('video');
                 videos.forEach(video => {
@@ -20,7 +102,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
 
-            // 切换菜单和页面
             menuItems.forEach(m => m.classList.remove('active'));
             pages.forEach(p => p.classList.remove('active'));
             this.classList.add('active');
@@ -39,17 +120,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!introContentDiv) return;
             introContentDiv.innerHTML = '';
             contentBlocks.forEach(block => {
-if (block.type === 'text') {
-    const p = document.createElement('p');
-    p.innerHTML = block.content;
-    // 根据 indent 属性添加不同的类
-    if (block.indent === true) {
-        p.classList.add('indent-paragraph');
-    } else {
-        p.classList.add('no-indent-paragraph');
-    }
-    introContentDiv.appendChild(p);
-} else if (block.type === 'image') {
+                if (block.type === 'text') {
+                    const p = document.createElement('p');
+                    p.innerHTML = block.content;
+                    if (block.indent === true) {
+                        p.classList.add('indent-paragraph');
+                    } else {
+                        p.classList.add('no-indent-paragraph');
+                    }
+                    introContentDiv.appendChild(p);
+                } else if (block.type === 'image') {
                     const img = document.createElement('img');
                     img.src = block.src;
                     img.alt = block.alt || '';
@@ -77,110 +157,123 @@ if (block.type === 'text') {
             document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-// ---------- 加载平台要闻（支持图文混排，独占播放视频）----------
-fetch('data/news.json')
-    .then(res => res.json())
-    .then(newsArray => {
-        const newsListDiv = document.getElementById('news-list');
-        if (!newsListDiv) return;
-        newsListDiv.innerHTML = '';
+    // ---------- 加载平台要闻（支持图文混排，独占播放视频，图片点击放大）----------
+    fetch('data/news.json')
+        .then(res => res.json())
+        .then(newsArray => {
+            const newsListDiv = document.getElementById('news-list');
+            if (!newsListDiv) return;
+            newsListDiv.innerHTML = '';
 
-        // 辅助函数：暂停所有新闻正文中的视频（可选，但不一定需要）
-        function pauseAllNewsVideos() {
-            const allVideos = document.querySelectorAll('.news-content video');
-            allVideos.forEach(video => video.pause());
-        }
-
-        // 辅助函数：为视频添加独占播放功能
-        function makeVideoExclusive(video) {
-            video.addEventListener('play', function() {
-                // 当此视频开始播放时，暂停所有其他视频
+            // 辅助函数：暂停所有新闻正文中的视频
+            function pauseAllNewsVideos() {
                 const allVideos = document.querySelectorAll('.news-content video');
-                allVideos.forEach(v => {
-                    if (v !== video && !v.paused) {
-                        v.pause();
-                    }
-                });
-            });
-        }
-
-        newsArray.forEach(item => {
-            const article = document.createElement('article');
-            article.className = 'news-item';
-
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'news-header';
-            headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
-
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'news-content';
-            contentDiv.style.display = 'none';
-
-            if (Array.isArray(item.content)) {
-                item.content.forEach(block => {
-                    if (block.type === 'text') {
-                        const p = document.createElement('p');
-                        p.innerHTML = block.value;
-                        if (block.indent === true) {
-                            p.classList.add('indent-paragraph');
-                        } else {
-                            p.classList.add('no-indent-paragraph');
-                        }
-                        contentDiv.appendChild(p);
-                    } else if (block.type === 'image') {
-                        const img = document.createElement('img');
-                        img.src = block.src;
-                        img.alt = block.alt || '';
-                        img.style.maxWidth = '100%';
-                        img.style.margin = '10px 0';
-                        contentDiv.appendChild(img);
-                    } else if (block.type === 'video') {
-                        const video = document.createElement('video');
-                        video.src = block.src;
-                        if (block.poster) video.poster = block.poster;
-                        video.controls = true;
-                        video.autoplay = true;
-                        video.muted = true;
-                        video.loop = true;
-                        video.style.maxWidth = '100%';
-                        video.style.margin = '10px 0';
-                        video.style.borderRadius = '8px';
-                        video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                        // 添加独占播放监听
-                        makeVideoExclusive(video);
-                        contentDiv.appendChild(video);
-                    }
-                });
-            } else {
-                const p = document.createElement('p');
-                p.textContent = item.content;
-                contentDiv.appendChild(p);
+                allVideos.forEach(video => video.pause());
             }
 
-            article.appendChild(headerDiv);
-            article.appendChild(contentDiv);
+            // 辅助函数：为视频添加独占播放功能
+            function makeVideoExclusive(video) {
+                video.addEventListener('play', function() {
+                    const allVideos = document.querySelectorAll('.news-content video');
+                    allVideos.forEach(v => {
+                        if (v !== video && !v.paused) {
+                            v.pause();
+                        }
+                    });
+                });
+            }
 
-            headerDiv.addEventListener('click', () => {
-                // 如果当前正文隐藏，则显示它，并暂停其他视频（可选）
-                if (contentDiv.style.display === 'none') {
-                    // 可选：在显示前暂停所有视频，避免后台播放
-                    pauseAllNewsVideos();
-                    contentDiv.style.display = 'block';
+            newsArray.forEach(item => {
+                const article = document.createElement('article');
+                article.className = 'news-item';
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'news-header';
+                headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'news-content';
+                contentDiv.style.display = 'none';
+
+                // 存储当前新闻的所有图片信息
+                const imagesInThisNews = [];
+
+                if (Array.isArray(item.content)) {
+                    item.content.forEach(block => {
+                        if (block.type === 'text') {
+                            const p = document.createElement('p');
+                            p.innerHTML = block.value;
+                            if (block.indent === true) {
+                                p.classList.add('indent-paragraph');
+                            } else {
+                                p.classList.add('no-indent-paragraph');
+                            }
+                            contentDiv.appendChild(p);
+                        } else if (block.type === 'image') {
+                            const img = document.createElement('img');
+                            img.src = block.src;
+                            img.alt = block.alt || '';
+                            img.style.maxWidth = '100%';
+                            img.style.margin = '10px 0';
+                            img.style.cursor = 'pointer';
+                            contentDiv.appendChild(img);
+                            // 记录图片信息
+                            imagesInThisNews.push({ src: block.src, alt: block.alt || '' });
+                        } else if (block.type === 'video') {
+                            const video = document.createElement('video');
+                            video.src = block.src;
+                            if (block.poster) video.poster = block.poster;
+                            video.controls = true;
+                            video.autoplay = true;
+                            video.muted = true;
+                            video.loop = true;
+                            video.style.maxWidth = '100%';
+                            video.style.margin = '10px 0';
+                            video.style.borderRadius = '8px';
+                            video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                            makeVideoExclusive(video);
+                            contentDiv.appendChild(video);
+                        }
+                    });
                 } else {
-                    contentDiv.style.display = 'none';
-                    // 如果收起，暂停当前正文中的视频
-                    const videosInCurrent = contentDiv.querySelectorAll('video');
-                    videosInCurrent.forEach(v => v.pause());
+                    const p = document.createElement('p');
+                    p.textContent = item.content;
+                    contentDiv.appendChild(p);
                 }
-            });
 
-            newsListDiv.appendChild(article);
+                // 为该新闻内的所有图片绑定点击事件
+                if (imagesInThisNews.length > 0) {
+                    const imageElements = contentDiv.querySelectorAll('img');
+                    imageElements.forEach((imgEl, idx) => {
+                        imgEl.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            showImageModal(imagesInThisNews, idx);
+                        });
+                    });
+                }
+
+                article.appendChild(headerDiv);
+                article.appendChild(contentDiv);
+
+                headerDiv.addEventListener('click', () => {
+                    if (contentDiv.style.display === 'none') {
+                        pauseAllNewsVideos();
+                        contentDiv.style.display = 'block';
+                    } else {
+                        contentDiv.style.display = 'none';
+                        const videosInCurrent = contentDiv.querySelectorAll('video');
+                        videosInCurrent.forEach(v => v.pause());
+                    }
+                });
+
+                newsListDiv.appendChild(article);
+            });
+        })
+        .catch(err => {
+            console.warn('新闻加载失败', err);
+            document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
         });
-    })
-    .catch(err => {
-        console.warn('新闻加载失败', err);
-        document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
-    });
+
     // ---------- 加载省市区数据 ----------
     fetch('data/areas_nested.json')
         .then(res => {
@@ -369,4 +462,8 @@ fetch('data/news.json')
     }
 
     bindQrcodeClick();
+
+    // 初始化图片查看器（用于新闻图片）
+    createImageModal();
+    bindImageModalEvents();
 });
