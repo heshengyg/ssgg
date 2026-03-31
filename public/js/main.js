@@ -1,5 +1,5 @@
-// main.js - 完整稳定版（含图片查看器）
-// 图片查看器函数（全局，用于新闻图片点击放大和左右浏览）
+// main.js - 完整稳定版（含图片查看器，简介和要闻均支持图片放大左右浏览）
+// 图片查看器函数（全局）
 function createImageModal() {
     if (document.getElementById('imageModal')) return;
     const modalDiv = document.createElement('div');
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---------- 加载平台简介（支持图文、视频）----------
+    // ---------- 加载平台简介（支持图文、视频，图片点击放大左右浏览）----------
     fetch('data/intro.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -119,6 +119,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const introContentDiv = document.getElementById('intro-content');
             if (!introContentDiv) return;
             introContentDiv.innerHTML = '';
+
+            // 收集简介中的所有图片信息
+            const introImages = [];
+
             contentBlocks.forEach(block => {
                 if (block.type === 'text') {
                     const p = document.createElement('p');
@@ -135,7 +139,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     img.alt = block.alt || '';
                     img.style.maxWidth = '100%';
                     img.style.margin = '10px 0';
+                    img.style.cursor = 'pointer';
+                    img.loading = 'lazy';
                     introContentDiv.appendChild(img);
+                    // 记录图片信息
+                    introImages.push({ src: block.src, alt: block.alt || '' });
                 } else if (block.type === 'video') {
                     const video = document.createElement('video');
                     video.src = block.src;
@@ -151,13 +159,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     introContentDiv.appendChild(video);
                 }
             });
+
+            // 为简介中的所有图片绑定点击事件（支持左右浏览）
+            if (introImages.length > 0) {
+                const imgElements = introContentDiv.querySelectorAll('img');
+                imgElements.forEach((imgEl, idx) => {
+                    imgEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showImageModal(introImages, idx);
+                    });
+                });
+            }
         })
         .catch(err => {
             console.error('平台简介加载失败：', err);
             document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- 加载平台要闻（支持图文混排，独占播放视频，图片点击放大）----------
+    // ---------- 加载平台要闻（支持图文混排，独占播放视频，图片点击放大左右浏览）----------
     fetch('data/news.json')
         .then(res => res.json())
         .then(newsArray => {
@@ -216,8 +235,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             img.style.maxWidth = '100%';
                             img.style.margin = '10px 0';
                             img.style.cursor = 'pointer';
+                            img.loading = 'lazy';
                             contentDiv.appendChild(img);
-                            // 记录图片信息
                             imagesInThisNews.push({ src: block.src, alt: block.alt || '' });
                         } else if (block.type === 'video') {
                             const video = document.createElement('video');
@@ -241,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     contentDiv.appendChild(p);
                 }
 
-                // 为该新闻内的所有图片绑定点击事件
+                // 为该新闻内的所有图片绑定点击事件（支持左右浏览）
                 if (imagesInThisNews.length > 0) {
                     const imageElements = contentDiv.querySelectorAll('img');
                     imageElements.forEach((imgEl, idx) => {
@@ -463,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     bindQrcodeClick();
 
-    // 初始化图片查看器（用于新闻图片）
+    // 初始化图片查看器（用于平台简介和要闻图片）
     createImageModal();
     bindImageModalEvents();
 });
