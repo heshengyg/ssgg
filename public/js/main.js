@@ -1,4 +1,4 @@
-// main.js - 最终版（手机端简介图片放大修复）
+// main.js - 最终版（图片放大：简介使用事件委托，要闻保持原方式）
 // 图片查看器函数（全局）
 function createImageModal() {
     if (document.getElementById('imageModal')) return;
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---------- 加载平台简介（支持图文、视频，图片点击放大左右浏览，移动端优化）----------
+    // ---------- 加载平台简介（使用事件委托处理图片点击，兼容移动端）----------
     fetch('data/intro.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -120,7 +120,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!introContentDiv) return;
             introContentDiv.innerHTML = '';
 
-            // 收集简介中的所有图片信息
             const introImages = [];
 
             contentBlocks.forEach(block => {
@@ -141,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     img.style.margin = '10px 0';
                     img.style.cursor = 'pointer';
                     img.loading = 'lazy';
-                    img.style.touchAction = 'manipulation'; // 提升移动端触摸响应
+                    img.style.touchAction = 'manipulation';
                     introContentDiv.appendChild(img);
                     introImages.push({ src: block.src, alt: block.alt || '' });
                 } else if (block.type === 'video') {
@@ -160,22 +159,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // 为简介图片绑定事件（同时支持 click 和 touchstart）
             if (introImages.length > 0) {
-                const imgElements = introContentDiv.querySelectorAll('img');
-                imgElements.forEach((imgEl, idx) => {
-                    // 移动端触摸优化
-                    imgEl.style.touchAction = 'manipulation';
-                    
-                    const handleImageClick = (e) => {
-                        e.stopPropagation();
-                        e.preventDefault();  // 避免移动端长按菜单
-                        showImageModal(introImages, idx);
-                    };
-                    
-                    imgEl.addEventListener('click', handleImageClick);
-                    imgEl.addEventListener('touchstart', handleImageClick, { passive: false });
-                });
+                // 事件委托：监听容器上的点击和触摸事件
+                const handleImageEvent = (e) => {
+                    let target = e.target;
+                    while (target && target !== introContentDiv) {
+                        if (target.tagName === 'IMG') {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            const src = target.src;
+                            const index = introImages.findIndex(img => img.src === src);
+                            if (index !== -1) {
+                                showImageModal(introImages, index);
+                            }
+                            break;
+                        }
+                        target = target.parentElement;
+                    }
+                };
+                introContentDiv.addEventListener('click', handleImageEvent);
+                introContentDiv.addEventListener('touchstart', handleImageEvent, { passive: false });
             }
         })
         .catch(err => {
@@ -183,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- 加载平台要闻（支持图文混排，独占播放视频，图片点击放大左右浏览）----------
+    // ---------- 加载平台要闻（保持原有方式，正常工作）----------
     fetch('data/news.json')
         .then(res => res.json())
         .then(newsArray => {
@@ -301,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- 加载省市区数据（保持不变）----------
+    // ---------- 加载省市区数据 ----------
     fetch('data/areas_nested.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -374,8 +377,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === modal) modal.style.display = 'none';
     });
 
-    // ---------- 表单提交 ----------
+    // ---------- 表单提交到 Cloudflare Functions ----------
     const API_ENDPOINT = '/submit';
+
     async function submitForm(formId, type) {
         const form = document.getElementById(formId);
         if (!form) return;
