@@ -1,4 +1,4 @@
-// main.js - 微信图片缩放完美修复版（双指缩放 + 拖动 + 重置）
+// main.js - 微信全兼容版（简介+要闻 图片点击放大+左右滑动+双指缩放）
 // 图片查看器函数（全局）
 function createImageModal() {
     if (document.getElementById('imageModal')) return;
@@ -15,7 +15,7 @@ function createImageModal() {
             <span class="image-modal-counter"></span>
             <button class="image-modal-next" disabled>&gt;</button>
         </div>
-        <div class="image-modal-tip">双指缩放 / 拖动查看</div>
+        <div class="image-modal-tip">双指缩放 / 拖动查看 / 左右切换</div>
     `;
     document.body.appendChild(modalDiv);
 
@@ -54,7 +54,6 @@ function createImageModal() {
     }
 
     img.addEventListener('touchstart', function(e) {
-        e.preventDefault();
         if (e.touches.length === 2) {
             const p1 = e.touches[0];
             const p2 = e.touches[1];
@@ -66,7 +65,7 @@ function createImageModal() {
             startY = e.touches[0].clientY - translateY;
             isDragging = true;
         }
-    }, { passive: false });
+    }, { passive: true });
 
     img.addEventListener('touchmove', function(e) {
         e.preventDefault();
@@ -77,10 +76,7 @@ function createImageModal() {
             const yDiff = Math.abs(p1.clientY - p2.clientY);
             const distance = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
             scale = lastScale * (distance / startDistance);
-            
-            if (scale < 0.5) scale = 0.5;
-            if (scale > 3) scale = 3;
-
+            scale = Math.max(0.5, Math.min(3, scale));
             img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
         } else if (e.touches.length === 1 && isDragging && scale > 1) {
             translateX = e.touches[0].clientX - startX;
@@ -102,27 +98,24 @@ let currentImageIndex = 0;
 
 function showImageModal(images, index) {
     const modal = document.getElementById('imageModal');
-    if (!modal) return;
+    if (!modal || !images || images.length === 0) return;
     currentImageList = images;
-    currentImageIndex = index;
+    currentImageIndex = Math.max(0, Math.min(index, images.length - 1));
     updateImageModal();
     modal.style.display = 'flex';
-    resetImageScale(); // 每次打开重置缩放
+    resetImageScale();
 }
 
 function updateImageModal() {
     const modal = document.getElementById('imageModal');
-    if (!modal) return;
+    if (!modal || currentImageList.length === 0) return;
     const img = modal.querySelector('#imageModalImg');
     const prevBtn = modal.querySelector('.image-modal-prev');
     const nextBtn = modal.querySelector('.image-modal-next');
     const counter = modal.querySelector('.image-modal-counter');
 
-    if (currentImageList.length === 0) return;
-
     img.src = currentImageList[currentImageIndex].src;
-    img.alt = currentImageList[currentImageIndex].alt;
-
+    img.alt = currentImageList[currentImageIndex].alt || '图片';
     counter.textContent = `${currentImageIndex + 1} / ${currentImageList.length}`;
     prevBtn.disabled = currentImageIndex === 0;
     nextBtn.disabled = currentImageIndex === currentImageList.length - 1;
@@ -150,6 +143,25 @@ function bindImageModalEvents() {
     });
 }
 
+// 统一绑定图片点击事件（修复微信不触发、简介/要闻通用）
+function bindImageClick(container, imageList) {
+    if (!container || imageList.length === 0) return;
+    const imgs = container.querySelectorAll('img');
+    imgs.forEach((imgEl, idx) => {
+        imgEl.style.cursor = 'pointer';
+        imgEl.style.touchAction = 'manipulation';
+        // 移除多余preventDefault，微信兼容click+touchend
+        const handler = (e) => {
+            e.stopPropagation();
+            // 只阻止弹窗内默认，不阻止点击触发
+            if (e.target.closest('.image-modal')) e.preventDefault();
+            showImageModal(imageList, idx);
+        };
+        imgEl.addEventListener('click', handler);
+        imgEl.addEventListener('touchend', handler, { passive: true });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ main.js loaded');
 
@@ -165,9 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (currentPage && currentPage !== targetPage) {
                 const videos = currentPage.querySelectorAll('video');
-                videos.forEach(video => {
-                    video.pause();
-                });
+                videos.forEach(video => video.pause());
             }
 
             menuItems.forEach(m => m.classList.remove('active'));
@@ -177,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---------- 加载平台简介 ----------
+    // ---------- 加载平台简介（修复：正确绑定点击+左右切换） ----------
     fetch('data/intro.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -187,18 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const introContentDiv = document.getElementById('intro-content');
             if (!introContentDiv) return;
             introContentDiv.innerHTML = '';
-
             const introImages = [];
 
             contentBlocks.forEach(block => {
                 if (block.type === 'text') {
                     const p = document.createElement('p');
                     p.innerHTML = block.content;
-                    if (block.indent === true) {
-                        p.classList.add('indent-paragraph');
-                    } else {
-                        p.classList.add('no-indent-paragraph');
-                    }
+                    p.classList.add(block.indent ? 'indent-paragraph' : 'no-indent-paragraph');
                     introContentDiv.appendChild(p);
                 } else if (block.type === 'image') {
                     const img = document.createElement('img');
@@ -206,9 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     img.alt = block.alt || '';
                     img.style.maxWidth = '100%';
                     img.style.margin = '10px 0';
-                    img.style.cursor = 'pointer';
                     img.loading = 'lazy';
-                    img.style.touchAction = 'manipulation';
                     introContentDiv.appendChild(img);
                     introImages.push({ src: block.src, alt: block.alt || '' });
                 } else if (block.type === 'video') {
@@ -227,26 +230,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            if (introImages.length > 0) {
-                const imgElements = introContentDiv.querySelectorAll('img');
-                imgElements.forEach((imgEl, idx) => {
-                    imgEl.style.touchAction = 'manipulation';
-                    const handleImageClick = (e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        showImageModal(introImages, idx);
-                    };
-                    imgEl.addEventListener('click', handleImageClick);
-                    imgEl.addEventListener('touchstart', handleImageClick, { passive: false });
-                });
-            }
+            // 修复：简介图片统一绑定点击（微信兼容）
+            bindImageClick(introContentDiv, introImages);
         })
         .catch(err => {
             console.error('平台简介加载失败：', err);
             document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- 加载平台要闻 ----------
+    // ---------- 加载平台要闻（保持正常，统一绑定逻辑） ----------
     fetch('data/news.json')
         .then(res => res.json())
         .then(newsArray => {
@@ -255,33 +247,23 @@ document.addEventListener('DOMContentLoaded', function() {
             newsListDiv.innerHTML = '';
 
             function pauseAllNewsVideos() {
-                const allVideos = document.querySelectorAll('.news-content video');
-                allVideos.forEach(video => video.pause());
+                document.querySelectorAll('.news-content video').forEach(v => v.pause());
             }
-
             function makeVideoExclusive(video) {
-                video.addEventListener('play', function() {
-                    const allVideos = document.querySelectorAll('.news-content video');
-                    allVideos.forEach(v => {
-                        if (v !== video && !v.paused) {
-                            v.pause();
-                        }
-                    });
+                video.addEventListener('play', () => {
+                    document.querySelectorAll('.news-content video').forEach(v => v !== video && v.pause());
                 });
             }
 
             newsArray.forEach(item => {
                 const article = document.createElement('article');
                 article.className = 'news-item';
-
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'news-header';
                 headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
-
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'news-content';
                 contentDiv.style.display = 'none';
-
                 const imagesInThisNews = [];
 
                 if (Array.isArray(item.content)) {
@@ -289,11 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (block.type === 'text') {
                             const p = document.createElement('p');
                             p.innerHTML = block.value;
-                            if (block.indent === true) {
-                                p.classList.add('indent-paragraph');
-                            } else {
-                                p.classList.add('no-indent-paragraph');
-                            }
+                            p.classList.add(block.indent ? 'indent-paragraph' : 'no-indent-paragraph');
                             contentDiv.appendChild(p);
                         } else if (block.type === 'image') {
                             const img = document.createElement('img');
@@ -301,9 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             img.alt = block.alt || '';
                             img.style.maxWidth = '100%';
                             img.style.margin = '10px 0';
-                            img.style.cursor = 'pointer';
                             img.loading = 'lazy';
-                            img.style.touchAction = 'manipulation';
                             contentDiv.appendChild(img);
                             imagesInThisNews.push({ src: block.src, alt: block.alt || '' });
                         } else if (block.type === 'video') {
@@ -328,34 +304,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     contentDiv.appendChild(p);
                 }
 
-                if (imagesInThisNews.length > 0) {
-                    const imageElements = contentDiv.querySelectorAll('img');
-                    imageElements.forEach((imgEl, idx) => {
-                        imgEl.style.touchAction = 'manipulation';
-                        const handleImageClick = (e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            showImageModal(imagesInThisNews, idx);
-                        };
-                        imgEl.addEventListener('click', handleImageClick);
-                        imgEl.addEventListener('touchstart', handleImageClick, { passive: false });
-                    });
-                }
+                // 修复：要闻图片统一绑定点击
+                bindImageClick(contentDiv, imagesInThisNews);
 
                 article.appendChild(headerDiv);
                 article.appendChild(contentDiv);
-
                 headerDiv.addEventListener('click', () => {
                     if (contentDiv.style.display === 'none') {
                         pauseAllNewsVideos();
                         contentDiv.style.display = 'block';
                     } else {
                         contentDiv.style.display = 'none';
-                        const videosInCurrent = contentDiv.querySelectorAll('video');
-                        videosInCurrent.forEach(v => v.pause());
+                        contentDiv.querySelectorAll('video').forEach(v => v.pause());
                     }
                 });
-
                 newsListDiv.appendChild(article);
             });
         })
@@ -379,34 +341,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!provSelect) return;
 
                 provSelect.innerHTML = '<option value="">请选择省</option>';
-                areaData.forEach(p => {
-                    provSelect.add(new Option(p.name, p.code));
-                });
+                areaData.forEach(p => provSelect.add(new Option(p.name, p.code)));
 
                 provSelect.addEventListener('change', function() {
-                    const selectedProvCode = this.value;
-                    const prov = areaData.find(p => p.code == selectedProvCode);
+                    const prov = areaData.find(p => p.code == this.value);
                     citySelect.innerHTML = '<option value="">请选择市</option>';
                     distSelect.innerHTML = '<option value="">请选择区/县</option>';
-                    if (prov && prov.children && prov.children.length > 0) {
-                        prov.children.forEach(c => {
-                            citySelect.add(new Option(c.name, c.code));
-                        });
-                    }
+                    prov?.children?.forEach(c => citySelect.add(new Option(c.name, c.code)));
                 });
 
                 citySelect.addEventListener('change', function() {
-                    const selectedCityCode = this.value;
-                    const provCode = provSelect.value;
-                    const prov = areaData.find(p => p.code == provCode);
-                    if (!prov || !prov.children) return;
-                    const city = prov.children.find(c => c.code == selectedCityCode);
+                    const prov = areaData.find(p => p.code == provSelect.value);
+                    const city = prov?.children?.find(c => c.code == this.value);
                     distSelect.innerHTML = '<option value="">请选择区/县</option>';
-                    if (city && city.children && city.children.length > 0) {
-                        city.children.forEach(d => {
-                            distSelect.add(new Option(d.name, d.code));
-                        });
-                    }
+                    city?.children?.forEach(d => distSelect.add(new Option(d.name, d.code)));
                 });
             }
 
@@ -429,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 关闭地图弹窗
-    document.querySelector('.close').addEventListener('click', function() {
+    document.querySelector('.close')?.addEventListener('click', () => {
         document.getElementById('mapModal').style.display = 'none';
     });
     window.addEventListener('click', function(e) {
@@ -461,14 +409,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const payload = {
-            type: type,
-            shopName: shopName,
-            contactName: contactName,
-            contactPhone: contactPhone,
-            province: province,
-            city: city,
-            district: district,
-            detailAddress: detailAddress,
+            type: type, shopName, contactName, contactPhone,
+            province, city, district, detailAddress,
             timestamp: new Date().toISOString()
         };
 
@@ -478,18 +420,14 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = true;
 
             const response = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
             const result = await response.json();
             if (result.code === 0) {
                 alert(`${type}入驻申请提交成功！`);
                 form.reset();
-            } else {
-                throw new Error(result.message || '提交失败');
-            }
+            } else throw new Error(result.message || '提交失败');
         } catch (error) {
             console.error('提交失败：', error);
             alert('提交失败，请稍后重试或联系管理员');
@@ -500,14 +438,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    document.getElementById('supplierForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        submitForm('supplierForm', '供应商');
+    document.getElementById('supplierForm')?.addEventListener('submit', e => {
+        e.preventDefault(); submitForm('supplierForm', '供应商');
     });
-
-    document.getElementById('merchantForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        submitForm('merchantForm', '商家');
+    document.getElementById('merchantForm')?.addEventListener('submit', e => {
+        e.preventDefault(); submitForm('merchantForm', 'merchantForm', '商家');
     });
 
     // ---------- 二维码点击放大和保存 ----------
@@ -526,11 +461,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(modalDiv);
         modalDiv.style.display = 'none';
 
-        const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
-        closeBtn.addEventListener('click', () => {
+        modalDiv.querySelector('.qrcode-modal-close').addEventListener('click', () => {
             modalDiv.style.display = 'none';
         });
-        modalDiv.addEventListener('click', (e) => {
+        modalDiv.addEventListener('click', e => {
             if (e.target === modalDiv) modalDiv.style.display = 'none';
         });
     }
@@ -540,16 +474,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (qrcodeImgs.length === 0) return;
         createQrcodeModal();
         qrcodeImgs.forEach(img => {
-            img.addEventListener('click', (e) => {
+            img.addEventListener('click', e => {
                 e.stopPropagation();
-                const modalImg = document.getElementById('qrcodeModalImg');
-                modalImg.src = img.src;
-                modalImg.alt = img.alt;
+                document.getElementById('qrcodeModalImg').src = img.src;
                 document.getElementById('qrcodeModal').style.display = 'flex';
             });
         });
     }
-
     bindQrcodeClick();
 
     // 初始化图片查看器
