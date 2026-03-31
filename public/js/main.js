@@ -1,4 +1,4 @@
-// main.js - 完整稳定版（含图片查看器，简介和要闻均支持图片放大左右浏览）
+// main.js - 完整稳定版（含图片查看器，简介和要闻均支持图片放大左右浏览，增加调试日志）
 // 图片查看器函数（全局）
 function createImageModal() {
     if (document.getElementById('imageModal')) return;
@@ -38,6 +38,7 @@ let currentImageIndex = 0;
 function showImageModal(images, index) {
     const modal = document.getElementById('imageModal');
     if (!modal) return;
+    console.log('显示图片查看器，图片列表长度：', images.length, '当前索引：', index);
     currentImageList = images;
     currentImageIndex = index;
     updateImageModal();
@@ -144,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     introContentDiv.appendChild(img);
                     // 记录图片信息
                     introImages.push({ src: block.src, alt: block.alt || '' });
+                    console.log('添加简介图片：', block.src);
                 } else if (block.type === 'video') {
                     const video = document.createElement('video');
                     video.src = block.src;
@@ -160,15 +162,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
+            console.log('简介图片总数：', introImages.length);
+
             // 为简介中的所有图片绑定点击事件（支持左右浏览）
             if (introImages.length > 0) {
                 const imgElements = introContentDiv.querySelectorAll('img');
+                console.log('找到简介图片DOM元素个数：', imgElements.length);
                 imgElements.forEach((imgEl, idx) => {
                     imgEl.addEventListener('click', (e) => {
                         e.stopPropagation();
+                        console.log('点击简介图片，索引：', idx);
                         showImageModal(introImages, idx);
                     });
                 });
+            } else {
+                console.warn('简介中没有图片，无法绑定放大事件');
             }
         })
         .catch(err => {
