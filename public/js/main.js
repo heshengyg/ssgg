@@ -1,4 +1,4 @@
-// main.js - 完整稳定版（含图片查看器，简介和要闻均支持图片放大左右浏览，增加调试日志）
+// main.js - 最终版（手机端简介图片放大修复）
 // 图片查看器函数（全局）
 function createImageModal() {
     if (document.getElementById('imageModal')) return;
@@ -38,7 +38,6 @@ let currentImageIndex = 0;
 function showImageModal(images, index) {
     const modal = document.getElementById('imageModal');
     if (!modal) return;
-    console.log('显示图片查看器，图片列表长度：', images.length, '当前索引：', index);
     currentImageList = images;
     currentImageIndex = index;
     updateImageModal();
@@ -110,84 +109,79 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-// ---------- 加载平台简介（支持图文、视频，图片点击放大左右浏览，移动端优化）----------
-fetch('data/intro.json')
-    .then(res => {
-        if (!res.ok) throw new Error('网络响应失败');
-        return res.json();
-    })
-    .then(contentBlocks => {
-        const introContentDiv = document.getElementById('intro-content');
-        if (!introContentDiv) return;
-        introContentDiv.innerHTML = '';
+    // ---------- 加载平台简介（支持图文、视频，图片点击放大左右浏览，移动端优化）----------
+    fetch('data/intro.json')
+        .then(res => {
+            if (!res.ok) throw new Error('网络响应失败');
+            return res.json();
+        })
+        .then(contentBlocks => {
+            const introContentDiv = document.getElementById('intro-content');
+            if (!introContentDiv) return;
+            introContentDiv.innerHTML = '';
 
-        // 收集简介中的所有图片信息
-        const introImages = [];
+            // 收集简介中的所有图片信息
+            const introImages = [];
 
-        contentBlocks.forEach(block => {
-            if (block.type === 'text') {
-                const p = document.createElement('p');
-                p.innerHTML = block.content;
-                if (block.indent === true) {
-                    p.classList.add('indent-paragraph');
-                } else {
-                    p.classList.add('no-indent-paragraph');
+            contentBlocks.forEach(block => {
+                if (block.type === 'text') {
+                    const p = document.createElement('p');
+                    p.innerHTML = block.content;
+                    if (block.indent === true) {
+                        p.classList.add('indent-paragraph');
+                    } else {
+                        p.classList.add('no-indent-paragraph');
+                    }
+                    introContentDiv.appendChild(p);
+                } else if (block.type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = block.src;
+                    img.alt = block.alt || '';
+                    img.style.maxWidth = '100%';
+                    img.style.margin = '10px 0';
+                    img.style.cursor = 'pointer';
+                    img.loading = 'lazy';
+                    img.style.touchAction = 'manipulation'; // 提升移动端触摸响应
+                    introContentDiv.appendChild(img);
+                    introImages.push({ src: block.src, alt: block.alt || '' });
+                } else if (block.type === 'video') {
+                    const video = document.createElement('video');
+                    video.src = block.src;
+                    if (block.poster) video.poster = block.poster;
+                    video.controls = true;
+                    video.autoplay = true;
+                    video.muted = true;
+                    video.loop = true;
+                    video.style.maxWidth = '100%';
+                    video.style.margin = '10px 0';
+                    video.style.borderRadius = '8px';
+                    video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    introContentDiv.appendChild(video);
                 }
-                introContentDiv.appendChild(p);
-            } else if (block.type === 'image') {
-                const img = document.createElement('img');
-                img.src = block.src;
-                img.alt = block.alt || '';
-                img.style.maxWidth = '100%';
-                img.style.margin = '10px 0';
-                img.style.cursor = 'pointer';
-                img.loading = 'lazy';
-                introContentDiv.appendChild(img);
-                introImages.push({ src: block.src, alt: block.alt || '' });
-                console.log('已添加简介图片：', block.src);
-            } else if (block.type === 'video') {
-                const video = document.createElement('video');
-                video.src = block.src;
-                if (block.poster) video.poster = block.poster;
-                video.controls = true;
-                video.autoplay = true;
-                video.muted = true;
-                video.loop = true;
-                video.style.maxWidth = '100%';
-                video.style.margin = '10px 0';
-                video.style.borderRadius = '8px';
-                video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                introContentDiv.appendChild(video);
-            }
-        });
-
-        console.log('简介图片总数：', introImages.length);
-
-        // 延迟绑定事件，确保 DOM 完全渲染（同时优化移动端触摸）
-        setTimeout(() => {
-            const imgElements = introContentDiv.querySelectorAll('img');
-            console.log('延迟后找到简介图片DOM元素个数：', imgElements.length);
-            imgElements.forEach((imgEl, idx) => {
-                // 提升移动端触摸响应
-                imgEl.style.touchAction = 'manipulation';
-                
-                const handleImageClick = (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();  // 避免移动端长按菜单干扰
-                    console.log('点击简介图片，索引：', idx);
-                    showImageModal(introImages, idx);
-                };
-                
-                // 同时绑定 click 和 touchstart（移动端更灵敏）
-                imgEl.addEventListener('click', handleImageClick);
-                imgEl.addEventListener('touchstart', handleImageClick, { passive: false });
             });
-        }, 100);
-    })
-    .catch(err => {
-        console.error('平台简介加载失败：', err);
-        document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
-    });
+
+            // 为简介图片绑定事件（同时支持 click 和 touchstart）
+            if (introImages.length > 0) {
+                const imgElements = introContentDiv.querySelectorAll('img');
+                imgElements.forEach((imgEl, idx) => {
+                    // 移动端触摸优化
+                    imgEl.style.touchAction = 'manipulation';
+                    
+                    const handleImageClick = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();  // 避免移动端长按菜单
+                        showImageModal(introImages, idx);
+                    };
+                    
+                    imgEl.addEventListener('click', handleImageClick);
+                    imgEl.addEventListener('touchstart', handleImageClick, { passive: false });
+                });
+            }
+        })
+        .catch(err => {
+            console.error('平台简介加载失败：', err);
+            document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
+        });
 
     // ---------- 加载平台要闻（支持图文混排，独占播放视频，图片点击放大左右浏览）----------
     fetch('data/news.json')
@@ -197,13 +191,11 @@ fetch('data/intro.json')
             if (!newsListDiv) return;
             newsListDiv.innerHTML = '';
 
-            // 辅助函数：暂停所有新闻正文中的视频
             function pauseAllNewsVideos() {
                 const allVideos = document.querySelectorAll('.news-content video');
                 allVideos.forEach(video => video.pause());
             }
 
-            // 辅助函数：为视频添加独占播放功能
             function makeVideoExclusive(video) {
                 video.addEventListener('play', function() {
                     const allVideos = document.querySelectorAll('.news-content video');
@@ -227,7 +219,6 @@ fetch('data/intro.json')
                 contentDiv.className = 'news-content';
                 contentDiv.style.display = 'none';
 
-                // 存储当前新闻的所有图片信息
                 const imagesInThisNews = [];
 
                 if (Array.isArray(item.content)) {
@@ -249,6 +240,7 @@ fetch('data/intro.json')
                             img.style.margin = '10px 0';
                             img.style.cursor = 'pointer';
                             img.loading = 'lazy';
+                            img.style.touchAction = 'manipulation';
                             contentDiv.appendChild(img);
                             imagesInThisNews.push({ src: block.src, alt: block.alt || '' });
                         } else if (block.type === 'video') {
@@ -273,14 +265,17 @@ fetch('data/intro.json')
                     contentDiv.appendChild(p);
                 }
 
-                // 为该新闻内的所有图片绑定点击事件（支持左右浏览）
                 if (imagesInThisNews.length > 0) {
                     const imageElements = contentDiv.querySelectorAll('img');
                     imageElements.forEach((imgEl, idx) => {
-                        imgEl.addEventListener('click', (e) => {
+                        imgEl.style.touchAction = 'manipulation';
+                        const handleImageClick = (e) => {
                             e.stopPropagation();
+                            e.preventDefault();
                             showImageModal(imagesInThisNews, idx);
-                        });
+                        };
+                        imgEl.addEventListener('click', handleImageClick);
+                        imgEl.addEventListener('touchstart', handleImageClick, { passive: false });
                     });
                 }
 
@@ -306,7 +301,7 @@ fetch('data/intro.json')
             document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- 加载省市区数据 ----------
+    // ---------- 加载省市区数据（保持不变）----------
     fetch('data/areas_nested.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -379,9 +374,8 @@ fetch('data/intro.json')
         if (e.target === modal) modal.style.display = 'none';
     });
 
-    // ---------- 表单提交到 Cloudflare Functions ----------
+    // ---------- 表单提交 ----------
     const API_ENDPOINT = '/submit';
-
     async function submitForm(formId, type) {
         const form = document.getElementById(formId);
         if (!form) return;
@@ -495,7 +489,7 @@ fetch('data/intro.json')
 
     bindQrcodeClick();
 
-    // 初始化图片查看器（用于平台简介和要闻图片）
+    // 初始化图片查看器
     createImageModal();
     bindImageModalEvents();
 });
