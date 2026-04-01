@@ -1,340 +1,497 @@
-// main.js - 微信100%兼容版（简介+要闻 图片点击/左右/缩放全正常）
-// 全局图片查看器（微信专属优化）
+// main.js - 最终版（图片放大：简介使用事件委托，要闻保持原方式）
+// 图片查看器函数（全局）
 function createImageModal() {
     if (document.getElementById('imageModal')) return;
     const modalDiv = document.createElement('div');
     modalDiv.id = 'imageModal';
     modalDiv.className = 'image-modal';
-    modalDiv.style.cssText = `
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center;
-        flex-direction: column;
-    `;
     modalDiv.innerHTML = `
-        <span class="image-modal-close" style="position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; cursor: pointer; z-index: 10000;">&times;</span>
-        <div class="image-modal-content" style="width: 90%; height: 80%; display: flex; justify-content: center; align-items: center;">
-            <img id="imageModalImg" style="max-width: 100%; max-height: 100%; object-fit: contain; touch-action: none;" src="" alt="">
+        <span class="image-modal-close">&times;</span>
+        <div class="image-modal-content">
+            <img id="imageModalImg" src="" alt="">
         </div>
-        <div class="image-modal-nav" style="margin-top: 10px; display: flex; gap: 20px; color: #fff;">
-            <button class="image-modal-prev" style="background: #333; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" disabled>&lt;</button>
+        <div class="image-modal-nav">
+            <button class="image-modal-prev" disabled>&lt;</button>
             <span class="image-modal-counter"></span>
-            <button class="image-modal-next" style="background: #333; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" disabled>&gt;</button>
+            <button class="image-modal-next" disabled>&gt;</button>
         </div>
-        <div class="image-modal-tip" style="color: #ccc; margin-top: 8px; font-size: 12px;">双指缩放 / 拖动 / 左右切换</div>
+        <div class="image-modal-tip">点击图片关闭</div>
     `;
     document.body.appendChild(modalDiv);
 
     const closeBtn = modalDiv.querySelector('.image-modal-close');
+    closeBtn.addEventListener('click', () => {
+        modalDiv.style.display = 'none';
+    });
+    modalDiv.addEventListener('click', (e) => {
+        if (e.target === modalDiv) modalDiv.style.display = 'none';
+    });
     const img = modalDiv.querySelector('#imageModalImg');
-    closeBtn.addEventListener('click', () => { resetImageScale(); modalDiv.style.display = 'none'; });
-    modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) { resetImageScale(); modalDiv.style.display = 'none'; } });
-    img.addEventListener('click', () => { resetImageScale(); modalDiv.style.display = 'none'; });
-
-    // 微信双指缩放+拖动（强制兼容）
-    let scale=1, startX=0, startY=0, translateX=0, translateY=0, lastScale=1, isDragging=false, startDistance=0;
-    function resetImageScale() {
-        scale=1; translateX=0; translateY=0; lastScale=1;
-        img.style.transform = 'translate(0,0) scale(1)';
-        img.style.transition = 'transform 0.2s ease';
-    }
-    img.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            const [p1,p2] = e.touches;
-            startDistance = Math.hypot(p1.clientX-p2.clientX, p1.clientY-p2.clientY);
-        } else if (e.touches.length === 1) {
-            startX = e.touches[0].clientX - translateX;
-            startY = e.touches[0].clientY - translateY;
-            isDragging = true;
-        }
-    }, { passive: true });
-    img.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (e.touches.length === 2) {
-            const [p1,p2] = e.touches;
-            const dist = Math.hypot(p1.clientX-p2.clientX, p1.clientY-p2.clientY);
-            scale = lastScale * (dist/startDistance);
-            scale = Math.max(0.5, Math.min(3, scale));
-            img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-        } else if (e.touches.length === 1 && isDragging && scale>1) {
-            translateX = e.touches[0].clientX - startX;
-            translateY = e.touches[0].clientY - startY;
-            img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-        }
-    }, { passive: false });
-    img.addEventListener('touchend', () => { lastScale=scale; isDragging=false; });
-    window.resetImageScale = resetImageScale;
+    img.addEventListener('click', () => {
+        modalDiv.style.display = 'none';
+    });
 }
 
-let currentImageList = [], currentImageIndex = 0;
+let currentImageList = [];
+let currentImageIndex = 0;
+
 function showImageModal(images, index) {
     const modal = document.getElementById('imageModal');
-    if (!modal || !images || images.length===0) return;
+    if (!modal) return;
     currentImageList = images;
-    currentImageIndex = Math.max(0, Math.min(index, images.length-1));
+    currentImageIndex = index;
     updateImageModal();
     modal.style.display = 'flex';
-    resetImageScale();
 }
+
 function updateImageModal() {
     const modal = document.getElementById('imageModal');
-    if (!modal || currentImageList.length===0) return;
+    if (!modal) return;
     const img = modal.querySelector('#imageModalImg');
     const prevBtn = modal.querySelector('.image-modal-prev');
     const nextBtn = modal.querySelector('.image-modal-next');
     const counter = modal.querySelector('.image-modal-counter');
+
+    if (currentImageList.length === 0) return;
+
     img.src = currentImageList[currentImageIndex].src;
-    img.alt = currentImageList[currentImageIndex].alt || '图片';
-    counter.textContent = `${currentImageIndex+1} / ${currentImageList.length}`;
+    img.alt = currentImageList[currentImageIndex].alt;
+
+    counter.textContent = `${currentImageIndex + 1} / ${currentImageList.length}`;
     prevBtn.disabled = currentImageIndex === 0;
-    nextBtn.disabled = currentImageIndex === currentImageList.length-1;
+    nextBtn.disabled = currentImageIndex === currentImageList.length - 1;
 }
+
 function bindImageModalEvents() {
     const modal = document.getElementById('imageModal');
     if (!modal) return;
     const prevBtn = modal.querySelector('.image-modal-prev');
     const nextBtn = modal.querySelector('.image-modal-next');
+
     prevBtn.addEventListener('click', () => {
-        if (currentImageIndex>0) { currentImageIndex--; updateImageModal(); resetImageScale(); }
+        if (currentImageIndex > 0) {
+            currentImageIndex--;
+            updateImageModal();
+        }
     });
     nextBtn.addEventListener('click', () => {
-        if (currentImageIndex < currentImageList.length-1) { currentImageIndex++; updateImageModal(); resetImageScale(); }
-    });
-}
-
-// ✅ 微信专属：全局事件委托（解决动态img点击失效，简介/要闻通用）
-document.addEventListener('DOMContentLoaded', () => {
-    // 全局委托：所有带data-img-index的图片，点击触发弹窗
-    document.addEventListener('click', (e) => {
-        const imgEl = e.target.closest('img[data-img-group]');
-        if (!imgEl) return;
-        e.stopPropagation();
-        const group = imgEl.dataset.imgGroup;
-        const index = parseInt(imgEl.dataset.imgIndex, 10);
-        const imageList = window[`_imgGroup_${group}`] || [];
-        showImageModal(imageList, index);
-    });
-    // 微信touchend兼容（解决click延迟/拦截）
-    document.addEventListener('touchend', (e) => {
-        const imgEl = e.target.closest('img[data-img-group]');
-        if (!imgEl) return;
-        e.stopPropagation();
-        const group = imgEl.dataset.imgGroup;
-        const index = parseInt(imgEl.dataset.imgIndex, 10);
-        const imageList = window[`_imgGroup_${group}`] || [];
-        showImageModal(imageList, index);
-    }, { passive: true });
-});
-
-// ✅ 统一绑定：给图片加data标记+存入全局组（微信必须）
-function bindImageClick(container, imageList, groupName) {
-    if (!container || imageList.length===0) return;
-    window[`_imgGroup_${groupName}`] = imageList; // 存入全局，委托可访问
-    const imgs = container.querySelectorAll('img');
-    imgs.forEach((imgEl, idx) => {
-        imgEl.dataset.imgGroup = groupName; // 标记组
-        imgEl.dataset.imgIndex = idx; // 标记索引
-        imgEl.style.cursor = 'pointer';
-        imgEl.style.touchAction = 'manipulation';
-        // 微信关键：禁用默认长按菜单，不拦截点击
-        imgEl.style.webkitTouchCallout = 'none';
-        imgEl.style.userSelect = 'none';
+        if (currentImageIndex < currentImageList.length - 1) {
+            currentImageIndex++;
+            updateImageModal();
+        }
     });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ main.js loaded (微信兼容版)');
+    console.log('✅ main.js loaded');
 
-    // ---------- 左侧菜单 ----------
+    // ---------- 左侧菜单切换（自动暂停视频） ----------
     const menuItems = document.querySelectorAll('.menu-item');
     const pages = document.querySelectorAll('.page');
+
     menuItems.forEach(item => {
-        item.addEventListener('click', function() {
-            const targetId = this.dataset.target;
+        item.addEventListener('click', function(e) {
+            const targetId = this.getAttribute('data-target');
             const currentPage = document.querySelector('.page.active');
             const targetPage = document.getElementById(targetId);
-            if (currentPage && currentPage!==targetPage) {
-                currentPage.querySelectorAll('video').forEach(v=>v.pause());
+
+            if (currentPage && currentPage !== targetPage) {
+                const videos = currentPage.querySelectorAll('video');
+                videos.forEach(video => {
+                    video.pause();
+                });
             }
-            menuItems.forEach(m=>m.classList.remove('active'));
-            pages.forEach(p=>p.classList.remove('active'));
+
+            menuItems.forEach(m => m.classList.remove('active'));
+            pages.forEach(p => p.classList.remove('active'));
             this.classList.add('active');
             targetPage.classList.add('active');
         });
     });
 
-    // ---------- ✅ 修复：平台简介（微信必生效） ----------
+    // ---------- 加载平台简介（使用事件委托处理图片点击，兼容移动端）----------
     fetch('data/intro.json')
-        .then(res=>{if(!res.ok)throw new Error('网络失败');return res.json();})
-        .then(contentBlocks=>{
-            const introContent = document.getElementById('intro-content');
-            if(!introContent)return;
-            introContent.innerHTML = '';
+        .then(res => {
+            if (!res.ok) throw new Error('网络响应失败');
+            return res.json();
+        })
+        .then(contentBlocks => {
+            const introContentDiv = document.getElementById('intro-content');
+            if (!introContentDiv) return;
+            introContentDiv.innerHTML = '';
+
             const introImages = [];
-            contentBlocks.forEach(block=>{
-                if(block.type==='text'){
-                    const p=document.createElement('p');
-                    p.innerHTML=block.content;
-                    p.classList.add(block.indent?'indent-paragraph':'no-indent-paragraph');
-                    introContent.appendChild(p);
-                }else if(block.type==='image'){
-                    const img=document.createElement('img');
-                    img.src=block.src;
-                    img.alt=block.alt||'';
-                    img.style.maxWidth='100%';
-                    img.style.margin='10px 0';
-                    img.loading='lazy';
-                    introContent.appendChild(img);
-                    introImages.push({src:block.src, alt:block.alt||''});
-                }else if(block.type==='video'){
-                    const video=document.createElement('video');
-                    video.src=block.src;
-                    if(block.poster)video.poster=block.poster;
-                    video.controls=true; video.autoplay=true; video.muted=true; video.loop=true;
-                    video.style.maxWidth='100%'; video.style.margin='10px 0';
-                    video.style.borderRadius='8px'; video.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';
-                    introContent.appendChild(video);
+
+            contentBlocks.forEach(block => {
+                if (block.type === 'text') {
+                    const p = document.createElement('p');
+                    p.innerHTML = block.content;
+                    if (block.indent === true) {
+                        p.classList.add('indent-paragraph');
+                    } else {
+                        p.classList.add('no-indent-paragraph');
+                    }
+                    introContentDiv.appendChild(p);
+                } else if (block.type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = block.src;
+                    img.alt = block.alt || '';
+                    img.style.maxWidth = '100%';
+                    img.style.margin = '10px 0';
+                    img.style.cursor = 'pointer';
+                    img.loading = 'lazy';
+                    img.style.touchAction = 'manipulation';
+                    introContentDiv.appendChild(img);
+                    introImages.push({ src: block.src, alt: block.alt || '' });
+                } else if (block.type === 'video') {
+                    const video = document.createElement('video');
+                    video.src = block.src;
+                    if (block.poster) video.poster = block.poster;
+                    video.controls = true;
+                    video.autoplay = true;
+                    video.muted = true;
+                    video.loop = true;
+                    video.style.maxWidth = '100%';
+                    video.style.margin = '10px 0';
+                    video.style.borderRadius = '8px';
+                    video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    introContentDiv.appendChild(video);
                 }
             });
-            // ✅ 关键：简介绑定（组名intro）
-            bindImageClick(introContent, introImages, 'intro');
+
+            if (introImages.length > 0) {
+                // 事件委托：监听容器上的点击和触摸事件
+                const handleImageEvent = (e) => {
+                    let target = e.target;
+                    while (target && target !== introContentDiv) {
+                        if (target.tagName === 'IMG') {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            const src = target.src;
+                            const index = introImages.findIndex(img => img.src === src);
+                            if (index !== -1) {
+                                showImageModal(introImages, index);
+                            }
+                            break;
+                        }
+                        target = target.parentElement;
+                    }
+                };
+                introContentDiv.addEventListener('click', handleImageEvent);
+                introContentDiv.addEventListener('touchstart', handleImageEvent, { passive: false });
+            }
         })
-        .catch(err=>{
-            console.error('简介加载失败',err);
-            document.getElementById('intro-content').innerHTML='<p style="color:red;">简介加载失败</p>';
+        .catch(err => {
+            console.error('平台简介加载失败：', err);
+            document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- ✅ 修复：平台要闻（保持一致，组名news+id） ----------
+    // ---------- 加载平台要闻（保持原有方式，正常工作）----------
     fetch('data/news.json')
-        .then(res=>res.json())
-        .then(newsArray=>{
-            const newsList=document.getElementById('news-list');
-            if(!newsList)return;
-            newsList.innerHTML='';
-            function pauseAllVideos(){document.querySelectorAll('.news-content video').forEach(v=>v.pause());}
-            function makeVideoExclusive(video){
-                video.addEventListener('play',()=>{
-                    document.querySelectorAll('.news-content video').forEach(v=>v!==video&&v.pause());
-                });
+        .then(res => res.json())
+        .then(newsArray => {
+            const newsListDiv = document.getElementById('news-list');
+            if (!newsListDiv) return;
+            newsListDiv.innerHTML = '';
+
+            function pauseAllNewsVideos() {
+                const allVideos = document.querySelectorAll('.news-content video');
+                allVideos.forEach(video => video.pause());
             }
-            newsArray.forEach((item,newsIdx)=>{
-                const article=document.createElement('article'); article.className='news-item';
-                const header=document.createElement('div'); header.className='news-header';
-                header.innerHTML=`<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
-                const content=document.createElement('div'); content.className='news-content'; content.style.display='none';
-                const newsImages=[];
-                if(Array.isArray(item.content)){
-                    item.content.forEach(block=>{
-                        if(block.type==='text'){
-                            const p=document.createElement('p'); p.innerHTML=block.value;
-                            p.classList.add(block.indent?'indent-paragraph':'no-indent-paragraph');
-                            content.appendChild(p);
-                        }else if(block.type==='image'){
-                            const img=document.createElement('img'); img.src=block.src; img.alt=block.alt||'';
-                            img.style.maxWidth='100%'; img.style.margin='10px 0'; img.loading='lazy';
-                            content.appendChild(img); newsImages.push({src:block.src, alt:block.alt||''});
-                        }else if(block.type==='video'){
-                            const video=document.createElement('video'); video.src=block.src;
-                            if(block.poster)video.poster=block.poster;
-                            video.controls=true; video.autoplay=true; video.muted=true; video.loop=true;
-                            video.style.maxWidth='100%'; video.style.margin='10px 0';
-                            video.style.borderRadius='8px'; video.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';
-                            makeVideoExclusive(video); content.appendChild(video);
+
+            function makeVideoExclusive(video) {
+                video.addEventListener('play', function() {
+                    const allVideos = document.querySelectorAll('.news-content video');
+                    allVideos.forEach(v => {
+                        if (v !== video && !v.paused) {
+                            v.pause();
                         }
                     });
-                }else{
-                    const p=document.createElement('p'); p.textContent=item.content; content.appendChild(p);
-                }
-                // ✅ 要闻绑定（组名news_+索引，避免冲突）
-                bindImageClick(content, newsImages, `news_${newsIdx}`);
-                article.appendChild(header); article.appendChild(content);
-                header.addEventListener('click',()=>{
-                    if(content.style.display==='none'){pauseAllVideos(); content.style.display='block';}
-                    else{content.style.display='none'; content.querySelectorAll('video').forEach(v=>v.pause());}
-                });
-                newsList.appendChild(article);
-            });
-        })
-        .catch(err=>{
-            console.warn('新闻加载失败',err);
-            document.getElementById('news-list').innerHTML='<p style="color:red;">要闻加载失败</p>';
-        });
-
-    // ---------- 省市区、地图、表单、二维码（保持不变） ----------
-    fetch('data/areas_nested.json')
-        .then(res=>{if(!res.ok)throw new Error('网络失败');return res.json();})
-        .then(areaData=>{
-            function initProvince(provId,cityId,distId){
-                const prov=document.getElementById(provId), city=document.getElementById(cityId), dist=document.getElementById(distId);
-                if(!prov)return;
-                prov.innerHTML='<option value="">请选择省</option>';
-                areaData.forEach(p=>prov.add(new Option(p.name,p.code)));
-                prov.addEventListener('change',()=>{
-                    const p=areaData.find(x=>x.code==prov.value);
-                    city.innerHTML='<option value="">请选择市</option>'; dist.innerHTML='<option value="">请选择区</option>';
-                    p?.children?.forEach(c=>city.add(new Option(c.name,c.code)));
-                });
-                city.addEventListener('change',()=>{
-                    const p=areaData.find(x=>x.code==prov.value);
-                    const c=p?.children?.find(x=>x.code==city.value);
-                    dist.innerHTML='<option value="">请选择区</option>';
-                    c?.children?.forEach(d=>dist.add(new Option(d.name,d.code)));
                 });
             }
-            initProvince('supplierProvince','supplierCity','supplierDistrict');
-            initProvince('merchantProvince','merchantCity','merchantDistrict');
+
+            newsArray.forEach(item => {
+                const article = document.createElement('article');
+                article.className = 'news-item';
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'news-header';
+                headerDiv.innerHTML = `<h3>${item.title}</h3><div class="news-time">📆 ${item.time}</div>`;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'news-content';
+                contentDiv.style.display = 'none';
+
+                const imagesInThisNews = [];
+
+                if (Array.isArray(item.content)) {
+                    item.content.forEach(block => {
+                        if (block.type === 'text') {
+                            const p = document.createElement('p');
+                            p.innerHTML = block.value;
+                            if (block.indent === true) {
+                                p.classList.add('indent-paragraph');
+                            } else {
+                                p.classList.add('no-indent-paragraph');
+                            }
+                            contentDiv.appendChild(p);
+                        } else if (block.type === 'image') {
+                            const img = document.createElement('img');
+                            img.src = block.src;
+                            img.alt = block.alt || '';
+                            img.style.maxWidth = '100%';
+                            img.style.margin = '10px 0';
+                            img.style.cursor = 'pointer';
+                            img.loading = 'lazy';
+                            img.style.touchAction = 'manipulation';
+                            contentDiv.appendChild(img);
+                            imagesInThisNews.push({ src: block.src, alt: block.alt || '' });
+                        } else if (block.type === 'video') {
+                            const video = document.createElement('video');
+                            video.src = block.src;
+                            if (block.poster) video.poster = block.poster;
+                            video.controls = true;
+                            video.autoplay = true;
+                            video.muted = true;
+                            video.loop = true;
+                            video.style.maxWidth = '100%';
+                            video.style.margin = '10px 0';
+                            video.style.borderRadius = '8px';
+                            video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                            makeVideoExclusive(video);
+                            contentDiv.appendChild(video);
+                        }
+                    });
+                } else {
+                    const p = document.createElement('p');
+                    p.textContent = item.content;
+                    contentDiv.appendChild(p);
+                }
+
+                if (imagesInThisNews.length > 0) {
+                    const imageElements = contentDiv.querySelectorAll('img');
+                    imageElements.forEach((imgEl, idx) => {
+                        imgEl.style.touchAction = 'manipulation';
+                        const handleImageClick = (e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            showImageModal(imagesInThisNews, idx);
+                        };
+                        imgEl.addEventListener('click', handleImageClick);
+                        imgEl.addEventListener('touchstart', handleImageClick, { passive: false });
+                    });
+                }
+
+                article.appendChild(headerDiv);
+                article.appendChild(contentDiv);
+
+                headerDiv.addEventListener('click', () => {
+                    if (contentDiv.style.display === 'none') {
+                        pauseAllNewsVideos();
+                        contentDiv.style.display = 'block';
+                    } else {
+                        contentDiv.style.display = 'none';
+                        const videosInCurrent = contentDiv.querySelectorAll('video');
+                        videosInCurrent.forEach(v => v.pause());
+                    }
+                });
+
+                newsListDiv.appendChild(article);
+            });
         })
-        .catch(err=>{
-            console.error('省市区加载失败',err);
-            document.querySelectorAll('.address-group select').forEach(s=>s.innerHTML='<option value="">加载失败</option>');
+        .catch(err => {
+            console.warn('新闻加载失败', err);
+            document.getElementById('news-list').innerHTML = '<p style="color:red;">要闻暂时无法加载，请稍后查看。</p>';
         });
 
-    // 地图选点
-    document.querySelectorAll('.map-pick-btn').forEach(btn=>{
-        btn.addEventListener('click',()=>{window.openMapPicker(btn.dataset.form);});
-    });
-    document.querySelector('.close')?.addEventListener('click',()=>{document.getElementById('mapModal').style.display='none';});
-    window.addEventListener('click',e=>{
-        const modal=document.getElementById('mapModal'); if(e.target===modal)modal.style.display='none';
+    // ---------- 加载省市区数据 ----------
+    fetch('data/areas_nested.json')
+        .then(res => {
+            if (!res.ok) throw new Error('网络响应失败');
+            return res.json();
+        })
+        .then(areaData => {
+            console.log('省市区数据加载成功', areaData);
+            function initProvince(provSelectId, citySelectId, distSelectId) {
+                const provSelect = document.getElementById(provSelectId);
+                const citySelect = document.getElementById(citySelectId);
+                const distSelect = document.getElementById(distSelectId);
+                if (!provSelect) return;
+
+                provSelect.innerHTML = '<option value="">请选择省</option>';
+                areaData.forEach(p => {
+                    provSelect.add(new Option(p.name, p.code));
+                });
+
+                provSelect.addEventListener('change', function() {
+                    const selectedProvCode = this.value;
+                    const prov = areaData.find(p => p.code == selectedProvCode);
+                    citySelect.innerHTML = '<option value="">请选择市</option>';
+                    distSelect.innerHTML = '<option value="">请选择区/县</option>';
+                    if (prov && prov.children && prov.children.length > 0) {
+                        prov.children.forEach(c => {
+                            citySelect.add(new Option(c.name, c.code));
+                        });
+                    }
+                });
+
+                citySelect.addEventListener('change', function() {
+                    const selectedCityCode = this.value;
+                    const provCode = provSelect.value;
+                    const prov = areaData.find(p => p.code == provCode);
+                    if (!prov || !prov.children) return;
+                    const city = prov.children.find(c => c.code == selectedCityCode);
+                    distSelect.innerHTML = '<option value="">请选择区/县</option>';
+                    if (city && city.children && city.children.length > 0) {
+                        city.children.forEach(d => {
+                            distSelect.add(new Option(d.name, d.code));
+                        });
+                    }
+                });
+            }
+
+            initProvince('supplierProvince', 'supplierCity', 'supplierDistrict');
+            initProvince('merchantProvince', 'merchantCity', 'merchantDistrict');
+        })
+        .catch(err => {
+            console.error('省市区数据加载失败：', err);
+            document.querySelectorAll('.address-group select').forEach(sel => {
+                sel.innerHTML = '<option value="">加载失败</option>';
+            });
+        });
+
+    // ---------- 地图选点按钮 ----------
+    document.querySelectorAll('.map-pick-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const formId = this.getAttribute('data-form');
+            window.openMapPicker(formId);
+        });
     });
 
-    // 表单提交
-    const API_ENDPOINT='/submit';
-    async function submitForm(formId,type){
-        const form=document.getElementById(formId); if(!form)return;
-        const shopName=form.querySelector('[name=shopName]').value.trim();
-        const contactName=form.querySelector('[name=contactName]').value.trim();
-        const contactPhone=form.querySelector('[name=contactPhone]').value.trim();
-        const detailAddr=form.querySelector('[name=detailAddress]').value.trim();
-        const prov=form.querySelector('[name=province]'), city=form.querySelector('[name=city]'), dist=form.querySelector('[name=district]');
-        const province=prov.options[prov.selectedIndex]?.text||'', cityName=city.options[city.selectedIndex]?.text||'', district=dist.options[dist.selectedIndex]?.text||'';
-        if(!shopName||!contactName||!contactPhone||!province||!cityName||!district||!detailAddr){alert('请填全必填项');return false;}
-        const payload={type,shopName,contactName,contactPhone,province,city:cityName,district,detailAddress:detailAddr,timestamp:new Date().toISOString()};
-        try{
-            const btn=form.querySelector('[type=submit]'); btn.textContent='提交中...'; btn.disabled=true;
-            const res=await fetch(API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-            const result=await res.json();
-            if(result.code===0){alert(`${type}申请成功`); form.reset();}else throw new Error(result.message||'失败');
-        }catch(e){console.error('提交失败',e); alert('提交失败，请重试');}
-        finally{const btn=form.querySelector('[type=submit]'); btn.textContent='提交入驻申请'; btn.disabled=false;}
-    }
-    document.getElementById('supplierForm')?.addEventListener('submit',e=>{e.preventDefault(); submitForm('supplierForm','供应商');});
-    document.getElementById('merchantForm')?.addEventListener('submit',e=>{e.preventDefault(); submitForm('merchantForm','商家');});
+    // 关闭地图弹窗
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('mapModal').style.display = 'none';
+    });
+    window.addEventListener('click', function(e) {
+        const modal = document.getElementById('mapModal');
+        if (e.target === modal) modal.style.display = 'none';
+    });
 
-    // 二维码
-    function createQrcodeModal(){
-        if(document.getElementById('qrcodeModal'))return;
-        const modal=document.createElement('div'); modal.id='qrcodeModal'; modal.className='qrcode-modal';
-        modal.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;justify-content:center;align-items:center;flex-direction:column;';
-        modal.innerHTML=`<span class="qrcode-modal-close" style="position:absolute;top:20px;right:30px;color:#fff;font-size:40px;cursor:pointer;">&times;</span><div style="width:80%;height:80%;display:flex;justify-content:center;align-items:center;"><img id="qrcodeModalImg" style="max-width:100%;max-height:100%;" src="" alt="二维码"></div><div style="color:#ccc;margin-top:10px;">长按保存</div>`;
-        document.body.appendChild(modal);
-        modal.querySelector('.qrcode-modal-close').addEventListener('click',()=>modal.style.display='none');
-        modal.addEventListener('click',e=>{if(e.target===modal)modal.style.display='none';});
+    // ---------- 表单提交到 Cloudflare Functions ----------
+    const API_ENDPOINT = '/submit';
+
+    async function submitForm(formId, type) {
+        const form = document.getElementById(formId);
+        if (!form) return;
+
+        const shopName = form.querySelector('input[name="shopName"]').value.trim();
+        const contactPhone = form.querySelector('input[name="contactPhone"]').value.trim();
+        const contactName = form.querySelector('input[name="contactName"]').value.trim();
+        const detailAddress = form.querySelector('input[name="detailAddress"]').value.trim();
+
+        const provSelect = form.querySelector('select[name="province"]');
+        const citySelect = form.querySelector('select[name="city"]');
+        const distSelect = form.querySelector('select[name="district"]');
+        const province = provSelect.options[provSelect.selectedIndex]?.text || '';
+        const city = citySelect.options[citySelect.selectedIndex]?.text || '';
+        const district = distSelect.options[distSelect.selectedIndex]?.text || '';
+
+        if (!shopName || !contactName || !contactPhone || !province || !city || !district || !detailAddress) {
+            alert('请填写所有必填字段');
+            return false;
+        }
+
+        const payload = {
+            type: type,
+            shopName: shopName,
+            contactName: contactName,
+            contactPhone: contactPhone,
+            province: province,
+            city: city,
+            district: district,
+            detailAddress: detailAddress,
+            timestamp: new Date().toISOString()
+        };
+
+        try {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.textContent = '提交中...';
+            submitBtn.disabled = true;
+
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (result.code === 0) {
+                alert(`${type}入驻申请提交成功！`);
+                form.reset();
+            } else {
+                throw new Error(result.message || '提交失败');
+            }
+        } catch (error) {
+            console.error('提交失败：', error);
+            alert('提交失败，请稍后重试或联系管理员');
+        } finally {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.textContent = '提交入驻申请';
+            submitBtn.disabled = false;
+        }
     }
-    function bindQrcode(){
-        const imgs=document.querySelectorAll('.qrcode-img'); if(imgs.length===0)return; createQrcodeModal();
-        imgs.forEach(img=>{img.addEventListener('click',e=>{e.stopPropagation();document.getElementById('qrcodeModalImg').src=img.src;document.getElementById('qrcodeModal').style.display='flex';});});
+
+    document.getElementById('supplierForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitForm('supplierForm', '供应商');
+    });
+
+    document.getElementById('merchantForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitForm('merchantForm', '商家');
+    });
+
+    // ---------- 二维码点击放大和保存 ----------
+    function createQrcodeModal() {
+        if (document.getElementById('qrcodeModal')) return;
+        const modalDiv = document.createElement('div');
+        modalDiv.id = 'qrcodeModal';
+        modalDiv.className = 'qrcode-modal';
+        modalDiv.innerHTML = `
+            <span class="qrcode-modal-close">&times;</span>
+            <div class="qrcode-modal-content">
+                <img id="qrcodeModalImg" src="" alt="二维码">
+            </div>
+            <div class="download-tip">长按图片即可保存到手机</div>
+        `;
+        document.body.appendChild(modalDiv);
+        modalDiv.style.display = 'none';
+
+        const closeBtn = modalDiv.querySelector('.qrcode-modal-close');
+        closeBtn.addEventListener('click', () => {
+            modalDiv.style.display = 'none';
+        });
+        modalDiv.addEventListener('click', (e) => {
+            if (e.target === modalDiv) modalDiv.style.display = 'none';
+        });
     }
-    bindQrcode();
+
+    function bindQrcodeClick() {
+        const qrcodeImgs = document.querySelectorAll('.qrcode-img');
+        if (qrcodeImgs.length === 0) return;
+        createQrcodeModal();
+        qrcodeImgs.forEach(img => {
+            img.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const modalImg = document.getElementById('qrcodeModalImg');
+                modalImg.src = img.src;
+                modalImg.alt = img.alt;
+                document.getElementById('qrcodeModal').style.display = 'flex';
+            });
+        });
+    }
+
+    bindQrcodeClick();
 
     // 初始化图片查看器
     createImageModal();
