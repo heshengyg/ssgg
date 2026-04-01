@@ -1,4 +1,4 @@
-// main.js - 最终版（图片放大：简介使用事件委托，要闻保持原方式）
+// main.js - 最终版（简介图片使用与要闻相同的直接绑定）
 // 图片查看器函数（全局）
 function createImageModal() {
     if (document.getElementById('imageModal')) return;
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---------- 加载平台简介（使用事件委托处理图片点击，兼容移动端）----------
+    // ---------- 加载平台简介（图片绑定与要闻完全一致）----------
     fetch('data/intro.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -140,7 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     img.style.margin = '10px 0';
                     img.style.cursor = 'pointer';
                     img.loading = 'lazy';
-                    img.style.touchAction = 'manipulation';
                     introContentDiv.appendChild(img);
                     introImages.push({ src: block.src, alt: block.alt || '' });
                 } else if (block.type === 'video') {
@@ -159,26 +158,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
+            // 与要闻完全一致的绑定方式：直接为每个图片添加 click 事件
             if (introImages.length > 0) {
-                // 事件委托：监听容器上的点击和触摸事件
-                const handleImageEvent = (e) => {
-                    let target = e.target;
-                    while (target && target !== introContentDiv) {
-                        if (target.tagName === 'IMG') {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            const src = target.src;
-                            const index = introImages.findIndex(img => img.src === src);
-                            if (index !== -1) {
-                                showImageModal(introImages, index);
-                            }
-                            break;
-                        }
-                        target = target.parentElement;
-                    }
-                };
-                introContentDiv.addEventListener('click', handleImageEvent);
-                introContentDiv.addEventListener('touchstart', handleImageEvent, { passive: false });
+                const imgElements = introContentDiv.querySelectorAll('img');
+                imgElements.forEach((imgEl, idx) => {
+                    imgEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showImageModal(introImages, idx);
+                    });
+                });
             }
         })
         .catch(err => {
@@ -186,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('intro-content').innerHTML = '<p style="color:red;">简介暂时无法加载，请稍后查看。</p>';
         });
 
-    // ---------- 加载平台要闻（保持原有方式，正常工作）----------
+    // ---------- 加载平台要闻（保持原有方式）----------
     fetch('data/news.json')
         .then(res => res.json())
         .then(newsArray => {
@@ -243,7 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             img.style.margin = '10px 0';
                             img.style.cursor = 'pointer';
                             img.loading = 'lazy';
-                            img.style.touchAction = 'manipulation';
                             contentDiv.appendChild(img);
                             imagesInThisNews.push({ src: block.src, alt: block.alt || '' });
                         } else if (block.type === 'video') {
@@ -271,14 +258,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (imagesInThisNews.length > 0) {
                     const imageElements = contentDiv.querySelectorAll('img');
                     imageElements.forEach((imgEl, idx) => {
-                        imgEl.style.touchAction = 'manipulation';
-                        const handleImageClick = (e) => {
+                        imgEl.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            e.preventDefault();
                             showImageModal(imagesInThisNews, idx);
-                        };
-                        imgEl.addEventListener('click', handleImageClick);
-                        imgEl.addEventListener('touchstart', handleImageClick, { passive: false });
+                        });
                     });
                 }
 
