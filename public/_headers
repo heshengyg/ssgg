@@ -1,23 +1,13 @@
-# 为图片文件设置一年的长缓存
+# 为所有图片设置一年缓存
 /images/*.jpg
-  Cache-Control: public, max-age=31536000, immutable
-
-/images/*.jpeg
   Cache-Control: public, max-age=31536000, immutable
 
 /images/*.png
   Cache-Control: public, max-age=31536000, immutable
 
-/images/*.webp
+/images/*.jpeg
   Cache-Control: public, max-age=31536000, immutable
 
-# 为 CSS、JS 文件也设置长缓存
-/*.css
+# 为视频设置缓存（但视频文件大，建议压缩）
+/images/*.mp4
   Cache-Control: public, max-age=31536000, immutable
-
-/*.js
-  Cache-Control: public, max-age=31536000, immutable
-
-# 为 HTML 页面设置一个较短的缓存，比如 1 小时
-/*.html
-  Cache-Control: public, max-age=3600
