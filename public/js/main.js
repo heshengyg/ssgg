@@ -1,4 +1,4 @@
-// main.js - 最终版（简介图片使用与要闻相同的直接绑定）
+// main.js - 最终版（简介图片使用内联 onclick 解决微信兼容性）
 // 图片查看器函数（全局）
 function createImageModal() {
     if (document.getElementById('imageModal')) return;
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ---------- 加载平台简介（图片绑定与要闻完全一致）----------
+    // ---------- 加载平台简介（图片使用内联 onclick 确保微信兼容）----------
     fetch('data/intro.json')
         .then(res => {
             if (!res.ok) throw new Error('网络响应失败');
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!introContentDiv) return;
             introContentDiv.innerHTML = '';
 
-            const introImages = [];
+            window.introImages = []; // 全局变量，供 onclick 使用
 
             contentBlocks.forEach(block => {
                 if (block.type === 'text') {
@@ -140,8 +140,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     img.style.margin = '10px 0';
                     img.style.cursor = 'pointer';
                     img.loading = 'lazy';
+                    const idx = window.introImages.length; // 当前图片在数组中的索引
+                    img.setAttribute('onclick', `showImageModal(window.introImages, ${idx})`);
                     introContentDiv.appendChild(img);
-                    introImages.push({ src: block.src, alt: block.alt || '' });
+                    window.introImages.push({ src: block.src, alt: block.alt || '' });
                 } else if (block.type === 'video') {
                     const video = document.createElement('video');
                     video.src = block.src;
@@ -157,17 +159,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     introContentDiv.appendChild(video);
                 }
             });
-
-            // 与要闻完全一致的绑定方式：直接为每个图片添加 click 事件
-            if (introImages.length > 0) {
-                const imgElements = introContentDiv.querySelectorAll('img');
-                imgElements.forEach((imgEl, idx) => {
-                    imgEl.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        showImageModal(introImages, idx);
-                    });
-                });
-            }
         })
         .catch(err => {
             console.error('平台简介加载失败：', err);
