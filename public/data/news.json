@@ -57,22 +57,23 @@
         "content": [
             {
                 "type": "text",
-                "value": "经过三个月的试运营，松鼠逛逛社区生活服务平台今日全面开放。目前已有超过100家本地供应商和社区商家完成入驻，覆盖生鲜、家政、维修等多个品类。"
+                "value": "经过三个月的试运营，松鼠逛逛社区生活服务平台今日全面开放。目前已有超过100家本地供应商和社区商家完成入驻，覆盖生鲜、家政、维修等多个品类。",
+                "indent": true
             },
             {
                 "type": "video",
-                "src": "images/news1_video1.mp4",
-                "poster": "images/news1_cover.jpg",
-                "alt": "开业现场视频"
-            },
-            {
-                "type": "image",
-                "src": "images/news1.jpg",
-                "alt": "开业现场"
+                "src": "images/news2_video1.mp4",
+                "alt": "alt"
             },
             {
                 "type": "text",
-                "value": "我们相信这将为社区带来更多便利。"
+                "value": "我们相信这将为社区带来更多便利。",
+                "indent": true
+            },
+            {
+                "type": "image",
+                "src": "images/news2_1.jpg",
+                "alt": "alt"
             }
         ]
     },
