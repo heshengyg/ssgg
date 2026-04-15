@@ -1,5 +1,31 @@
 [  
     {
+        "title": "松鼠逛逛正式上线，首批百家商户入驻",
+        "time": "2025-04-03",
+        "content": [
+            {
+                "type": "text",
+                "value": "经过三个月的试运营，松鼠逛逛社区生活服务平台今日全面开放。目前已有超过100家本地供应商和社区商家完成入驻，覆盖生鲜、家政、维修等多个品类。",
+                "indent": true
+            },
+            {
+                "type": "video",
+                "src": "images/news1_video1.mp4",
+                "alt": "alt"
+            },
+            {
+                "type": "text",
+                "value": "我们相信这将为社区带来更多便利。",
+                "indent": true
+            },
+            {
+                "type": "image",
+                "src": "images/news1_1.jpg",
+                "alt": "alt"
+            }
+        ]
+    },
+    {
         "title": "春节服务不打烊，配送时效公告",
         "time": "2025-02-01",
         "content": [
