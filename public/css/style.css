@@ -655,3 +655,18 @@ video {
     color: rgba(255,255,255,0.6);
     font-size: 12px;
 }
+
+/* 字体颜色类 */
+.text-red { color: #e74c3c; }
+.text-green { color: #2ecc71; }
+.text-yellow { color: #f1c40f; }
+
+/* 背景色（底色）类 */
+.bg-red { background-color: #ffdddd; }
+.bg-green { background-color: #ddffdd; }
+.bg-yellow { background-color: #ffffcc; }
+
+/* 加粗类（可选，但 <b> 本身已加粗，此处可省略） */
+.bold { font-weight: bold; }
+
+/* 组合类（如果需要同时加粗和颜色，可直接用 <b> + 颜色类） */
