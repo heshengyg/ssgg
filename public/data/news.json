@@ -1,5 +1,65 @@
 [  
     {
+        "title": "关于次日达送达时间的调整",
+        "time": "2026-03-31",
+        "content": [
+            {
+                "type": "text",
+                "value": "鉴于夏日即将来临，为了保证每天的蔬菜新鲜，同时保证上班族下班后方便取菜，本平台从4月1日其调整每日送达时间，具体如下：",
+                "indent": true
+            },
+            {
+                "type": "text",
+                "value": "<b>调整核心</b>"
+            },
+            {
+                "type": "text",
+                "value": "原送达时间：次日9：00"
+            },
+            {
+                "type": "text",
+                "value": "现送达时间：次日16：00"
+            },
+            {
+                "type": "text",
+                "value": "<b>存储条件</b>"
+            },
+            {
+                "type": "text",
+                "value": "每店菜品到达店铺后均放置在<b>冰柜</b>或<b>保温箱</b>"
+            },
+            {
+                "type": "text",
+                "value": "⚫ 保证每件菜品品质。"
+            },
+            {
+                "type": "text",
+                "value": "<b>解决痛点</b>"
+            },
+            {
+                "type": "text",
+                "value": "⚫ 告别下班<b>买菜不便</b>"
+            },
+            {
+                "type": "text",
+                "value": "⚫ 拒绝下班<b>买菜品少</b>"
+            },
+            {
+                "type": "text",
+                "value": "⚫ 拒绝下班<b>买菜品差</b>"
+            },
+            {
+                "type": "text",
+                "value": "⚫ <b>下班顺手带回家家经济实惠高效省心</b>"
+            },
+            {
+                "type": "image",
+                "src": "images/news2_1.jpg",
+                "alt": "alt"
+            }
+        ]
+    },
+    {
         "title": "松鼠逛逛正式上线，首批百家商户入驻",
         "time": "2025-04-03",
         "content": [
