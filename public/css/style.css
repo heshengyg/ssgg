@@ -657,14 +657,14 @@ video {
 }
 
 /* 字体颜色类 */
-.text-red { color: #e74c3c; }
-.text-green { color: #2ecc71; }
-.text-yellow { color: #f1c40f; }
+.text-red { color: #FF0000; }
+.text-green { color: #70AD47; }
+.text-yellow { color: #FFC000; }
 
 /* 背景色（底色）类 */
-.bg-red { background-color: #ffdddd; }
-.bg-green { background-color: #ddffdd; }
-.bg-yellow { background-color: #ffffcc; }
+.bg-red { background-color: ##FF0000; }
+.bg-green { background-color: #70AD47; }
+.bg-yellow { background-color: #FFC000; }
 
 /* 加粗类（可选，但 <b> 本身已加粗，此处可省略） */
 .bold { font-weight: bold; }

@@ -1,11 +1,11 @@
 [  
     {
-        "title": "关于次日达送达时间的调整",
-        "time": "2026-03-31",
+        "title": "",
+        "time": "2026-04-17",
         "content": [
             {
                 "type": "text",
-                "value": "鉴于<span class='bg-yellow'>夏日</span>即将来临，为了保证每天的蔬菜新鲜，同时保证上班族下班后方便取菜，本平台从<b class='bg-red'>4月1日</b>其调整每日送达时间，具体如下："
+                "value": "鉴于夏日即将来临，为了保证每天的蔬菜新鲜，同时保证上班族下班后方便取菜，本平台从<b class='text-green'>4月1日</b>其调整每日送达时间，具体如下："
             },
             {
                 "type": "text",
@@ -13,11 +13,11 @@
             },
             {
                 "type": "text",
-                "value": "原送达时间：次日<b class='bg-red'>9：00</b>"
+                "value": "原送达时间：次日<span class='bg-red'>9：00</span>"
             },
             {
                 "type": "text",
-                "value": "现送达时间：次日<b class='bg-green'>16：00</b>"
+                "value": "现送达时间：次日<span class='bg-red'>16：00</span>"
             },
             {
                 "type": "text",
@@ -25,11 +25,11 @@
             },
             {
                 "type": "text",
-                "value": "每店菜品到达店铺后均放置在<b class='bg-yellow'>冰柜</b>或<b class='bg-yellow'>保温箱</b>"
+                "value": "⚪ 每店菜品到达店铺后均放置在<span class='bg-green'>冰柜</span>或<span class='bg-green'>保温箱</span>"
             },
             {
                 "type": "text",
-                "value": "⚫ <b class='text-green'>保证每件菜品品质</b>。"
+                "value": "⚪ 保证每件菜品<b class='text-green'>品质</b>"
             },
             {
                 "type": "text",
@@ -37,19 +37,19 @@
             },
             {
                 "type": "text",
-                "value": "⚫ <b class='text-green'>告别下班买菜<span class='bg-yellow'>不便</span></b>"
+                "value": "⚪ <span class='text-green'>告别下班买菜<b class='bg-yellow'>不便</b></span>"
             },
             {
                 "type": "text",
-                "value": "⚫ <b class='text-green'>拒绝下班买菜<span class='bg-yellow'>品少</span></b>"
+                "value": "⚪ <span class='text-green'>拒绝下班买菜<b class='bg-yellow'>品少</b></span>"
             },
             {
                 "type": "text",
-                "value": "⚫ <b class='text-green'>拒绝下班买菜<span class='bg-yellow'>品差</span></b>"
+                "value": "⚪ <span class='text-green'>拒绝下班买菜<b class='bg-yellow'>品差</b></span>"
             },
             {
                 "type": "text",
-                "value": "⚫ <b class='text-green'><span class='bg-yellow'>下班顺手带回家家经济实惠高效省心</span></b>"
+                "value": "⚪ <b class='bg-green'><span class='text-yellow'>下班顺手带回家家经济实惠高效省心</span></b>"
             },
             {
                 "type": "image",
