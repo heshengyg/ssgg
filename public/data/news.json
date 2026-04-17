@@ -1,7 +1,7 @@
 [  
     {
-        "title": "",
-        "time": "2026-04-17",
+        "title": "关于次日达送达时间的调整通知",
+        "time": "2026-03-31",
         "content": [
             {
                 "type": "text",
@@ -13,11 +13,11 @@
             },
             {
                 "type": "text",
-                "value": "原送达时间：次日<span class='bg-red'>9：00</span>"
+                "value": "原送达时间：次日<b class='text-red'>9：00</b>"
             },
             {
                 "type": "text",
-                "value": "现送达时间：次日<span class='bg-red'>16：00</span>"
+                "value": "现送达时间：次日<b class='text-green'>16：00</b>"
             },
             {
                 "type": "text",
@@ -25,7 +25,7 @@
             },
             {
                 "type": "text",
-                "value": "⚪ 每店菜品到达店铺后均放置在<span class='bg-green'>冰柜</span>或<span class='bg-green'>保温箱</span>"
+                "value": "⚪ 每店菜品到达店铺后均放置在<b class='text-green'>冰柜</b>或<b class='text-green'>保温箱</b>"
             },
             {
                 "type": "text",
@@ -37,19 +37,19 @@
             },
             {
                 "type": "text",
-                "value": "⚪ <span class='text-green'>告别下班买菜<b class='bg-yellow'>不便</b></span>"
+                "value": "⚪ <span class='text-green'>告别下班买菜</span><b class='text-red'>不便</b>"
             },
             {
                 "type": "text",
-                "value": "⚪ <span class='text-green'>拒绝下班买菜<b class='bg-yellow'>品少</b></span>"
+                "value": "⚪ <span class='text-green'>拒绝下班买菜</span><b class='text-red'>品少</b>"
             },
             {
                 "type": "text",
-                "value": "⚪ <span class='text-green'>拒绝下班买菜<b class='bg-yellow'>品差</b></span>"
+                "value": "⚪ <span class='text-green'>拒绝下班买菜</span><b class='text-red'>品差</b>"
             },
             {
                 "type": "text",
-                "value": "⚪ <b class='bg-green'><span class='text-yellow'>下班顺手带回家家经济实惠高效省心</span></b>"
+                "value": "⚪ <b class='text-green'>下班顺手带回家家经济实惠高效省心</b>"
             },
             {
                 "type": "image",
