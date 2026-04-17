@@ -9,7 +9,7 @@
             },
             {
                 "type": "text",
-                "value": "<b class='bg-green'>调整核心</b>"
+                "value": "<span class='bg-green'><b class='text-yellow'>调整核心</b></span>"
             },
             {
                 "type": "text",
@@ -21,7 +21,7 @@
             },
             {
                 "type": "text",
-                "value": "<b class='bg-green'>存储条件</b>"
+                "value": "<span class='bg-green'><b class='text-yellow'>存储条件</b></span>"
             },
             {
                 "type": "text",
@@ -33,7 +33,7 @@
             },
             {
                 "type": "text",
-                "value": "<b class='bg-green'>解决痛点</b>"
+                "value": "<span class='bg-green'><b class='text-yellow'>解决痛点</b></span>"
             },
             {
                 "type": "text",
