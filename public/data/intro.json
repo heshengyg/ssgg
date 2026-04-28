@@ -1,4 +1,4 @@
-[
+﻿[
     {
         "type": "video",
         "src": "images/intro_video1.mp4",
@@ -12,17 +12,26 @@
     },
     {
         "type": "text",
-        "content": "“松鼠逛逛”APP展现给消费者的就是“<b>身边的店，身边的事</b>”，社区居民不出门即可“<b>逛身边的店、聊身边的事</b>”，真正为社区居民建立一个互动交流空间，提供更加便捷、高效、优质的购物和服务体验。",
+        "content": "“松鼠逛逛”APP展现给消费者的就是“身边的店，身边的事”，社区居民不出门即可“逛身边的店、聊身边的事”，真正为社区居民建立一个互动交流空间，提供更加便捷、高效、优质的购物和服务体验。",
         "indent": true
     },
     {
         "type": "text",
-        "content": "“松鼠逛逛”社区生活电商平台秉持“<b>商业创新、服务社区</b>”的理念，主要有以下特点 ：",
-        "indent": true
+        "content": "“松鼠逛逛”社区生活电商平台秉持“商业创新、服务社区”的理念，主要有以下特点 ："
+    },
+    {
+        "type": "image",
+        "src": "images/intro1.jpg",
+        "alt": "alt"
+    },
+    {
+        "type": "video",
+        "src": "images/intro_video2.mp4",
+        "alt": "alt"
     },
     {
         "type": "text",
-        "content": "<b>为实体经营赋能</b>"
+        "content": "为实体经营赋能"
     },
     {
         "type": "text",
@@ -31,12 +40,12 @@
     },
     {
         "type": "image",
-        "src": "images/intro1.jpg",
+        "src": "images/intro2.jpg",
         "alt": "alt"
     },
     {
         "type": "text",
-        "content": "<b>身边的活力社区</b>"
+        "content": "身边的活力社区"
     },
     {
         "type": "text",
@@ -45,7 +54,7 @@
     },
     {
         "type": "text",
-        "content": "<b>农副产品产销对接</b>"
+        "content": "农副产品产销对接"
     },
     {
         "type": "text",
