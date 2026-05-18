@@ -3,7 +3,7 @@
         "type": "video",
         "src": "images/intro_video1.mp4",
         "poster": "intro_video1_cover.jpg",
-        "alt": "平台介绍"
+        "alt": "alt"
     },
     {
         "type": "text",
